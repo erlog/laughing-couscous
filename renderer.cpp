@@ -7,7 +7,6 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-using namespace std;
 //Other Libraries
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -16,6 +15,8 @@ using namespace std;
 #include <SDL_opengl_glext.h>
 #include <ruby.h>
 #include "lodepng.cpp"
+//Namespaces
+using namespace std;
 //Local Headers
 #include "renderer.h"
 //State Struct
@@ -32,8 +33,8 @@ uint32_t current_time() {
 }
 
 void send_vertex(Vertex* vertex, GLint t_loc, GLint b_loc, GLint n_loc) {
-    Point* v = &vertex->v; Point* uv = &vertex->uv;
-    Point* t = &vertex->t; Point* b = &vertex->b; Point* n = &vertex->n;
+    glm::vec4* v = &vertex->v; glm::vec3* uv = &vertex->uv;
+    glm::vec3* t = &vertex->t; glm::vec3* b = &vertex->b; glm::vec3* n = &vertex->n;
 
     glVertexAttrib3f(t_loc, t->x, t->y, t->z);
     glVertexAttrib3f(b_loc, b->x, b->y, b->z);
@@ -43,7 +44,10 @@ void send_vertex(Vertex* vertex, GLint t_loc, GLint b_loc, GLint n_loc) {
 }
 
 int main() {
-    glm::vec4 testpos = glm::vec4(1.f, 1.f, 1.f, 1.f);
+    glm::vec4 testpos4 = glm::vec4(1.f, 1.f, 1.f, 1.f);
+    glm::vec3 testpos3 = glm::vec3(2.f, 2.f, 2.f);
+    glm::mat4 model;
+    glm::vec4 result = model*testpos4;
     //INITIALIZATION- Failures here cause a hard exit
     State.AssetFolderPath = "objects";
     State.OutputFolderPath = "output";
@@ -171,7 +175,7 @@ int main() {
 
 
             glBegin( GL_TRIANGLES );
-            int face_i; Face* face; Point* v; Point* uv; Point* n; Point* t;
+            int face_i; Face* face;
             for(face_i = 0; face_i < object.model->face_count; face_i++) {
                 face = &object.model->faces[face_i];
                 send_vertex(&face->a, tangent_location, bitangent_location,

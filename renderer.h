@@ -13,20 +13,21 @@ typedef struct c_texture {
     uint8_t* buffer;
 } Texture;
 
-typedef struct c_point {
-    int id;
-    GLfloat x;
-    GLfloat y;
-    GLfloat z;
-} Point;
-
 typedef struct c_vertex {
-    Point v;    //Vertex
-    Point uv;   //Texture Coordinate
-    Point n;    //Normal Vector
-    Point t;    //Tangent Vector
-    Point b;    //Bitangent Vector
+    glm::vec4 v;    //Vertex
+    glm::vec3 uv;   //Texture Coordinate (vec3 for the W coord)
+    glm::vec3 n;    //Normal Vector
+    glm::vec3 t;    //Tangent Vector
+    glm::vec3 b;    //Bitangent Vector
 } Vertex;
+
+typedef struct c_face_indices {
+    //Struct to store vertex indices in order to average tangent/bitangent
+    //after the fact
+    int a_index;
+    int b_index;
+    int c_index;
+} Indexed_Face;
 
 typedef struct c_face {
     Vertex a;
@@ -37,7 +38,6 @@ typedef struct c_face {
 typedef struct c_model {
     string asset_path;
     int face_count;
-    int vertex_count;
     Face* faces;
 } Model;
 
@@ -48,7 +48,6 @@ typedef struct c_object {
     Texture* texture;
     Texture* normal_map;
     Texture* specular_map;
-    Point* location;
     GLuint shader_program; //ID assigned to our compiled shader by OpenGL
 } Object;
 
