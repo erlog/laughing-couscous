@@ -1,7 +1,9 @@
 //Small functions that don't fit anywhere else with minimal dependencies
-string construct_asset_path(string object_name, string filename) {
-    //TODO:this seems gross
-    return State.AssetFolderPath + "/" + object_name + "/" + filename;
+char* construct_asset_path(const char* folder, const char* filename) {
+    char* buffer = (char*)malloc(sizeof(char)*255);
+    snprintf(buffer, 254, "%s/%s/%s", State.AssetFolderPath, folder,
+        filename);
+    return buffer;
 }
 
 char* get_datetime_string() {
@@ -13,20 +15,8 @@ char* get_datetime_string() {
     return output;
 }
 
-bool read_entire_file(string file_path, string* output_string) {
-    ifstream infile; infile.open(file_path);
-    //TODO: error handling
-    stringstream str_stream; str_stream << infile.rdbuf();
-    *output_string = str_stream.str();
-    return true;
-}
-
-
 void message_log(const char* message, const char* predicate) {
     printf("%i: %s %s\n", State.CurrentTime, message, predicate);
-}
-void message_log(const char* message, string predicate) {
-    message_log(message, predicate.c_str());
 }
 
 void flip_texture(Texture* texture) {
@@ -42,13 +32,21 @@ void flip_texture(Texture* texture) {
     return;
 }
 
-bool load_shader(string shader_path, GLuint* shader_id, GLenum shader_type) {
-    string shader_source_string;
-    if(!read_entire_file(shader_path, &shader_source_string)) {
+bool load_shader(const char* shader_path, GLuint* shader_id, GLenum shader_type) {
+    //Read in shader source
+    FILE* file = fopen(shader_path, "r");
+    if(file == NULL) {
+        return false;
         message_log("Error loading file-", shader_path);
     }
+    fseek(file, 0, SEEK_END); int length = ftell(file); fseek(file, 0, SEEK_SET);
+    GLchar* shader_source = (GLchar*)malloc(sizeof(GLchar)*length+1);
+    fread(shader_source, sizeof(GLchar), length, file);
+    shader_source[length] = (GLchar)0;
+    fclose(file);
+
+    //Compile shader
     *shader_id = glCreateShader(shader_type);
-    const GLchar* shader_source = shader_source_string.c_str();
     glShaderSource(*shader_id, 1, (const GLchar**)&shader_source, NULL);
     glCompileShader(*shader_id);
 
@@ -66,13 +64,13 @@ bool load_shader(string shader_path, GLuint* shader_id, GLenum shader_type) {
 }
 
 
-bool load_texture(string object_name, string filename, Texture* texture) {
-    texture->asset_path = construct_asset_path(object_name, filename);
+bool load_texture(const char* filename, Texture* texture) {
+    texture->asset_path = construct_asset_path("textures", filename);
 
     //Load PNG
     unsigned width; unsigned height;
     if(lodepng_decode32_file(&texture->buffer, &width, &height,
-        texture->asset_path.c_str())) { return false; }
+        texture->asset_path)) { return false; }
 
     //Create texture struct
     texture->bytes_per_pixel = 4;
@@ -99,44 +97,83 @@ bool load_texture(string object_name, string filename, Texture* texture) {
 bool load_object(Object* object) {
     //Texture
     object->texture = (Texture*)malloc(sizeof(Texture));
-    if(!load_texture(object->object_name, string("diffuse.png"), object->texture)) {
-        message_log("Error loading texture-", object->object_name);
+    if(!load_texture(object->texture_name, object->texture)) {
+        message_log("Error loading texture-", object->texture_name);
         return false;
     }
     //Normal Map
     object->normal_map= (Texture*)malloc(sizeof(Texture));
-    if(!load_texture(object->object_name, string("nm_tangent.png"), object->normal_map)) {
-        message_log("Error loading normal map-", object->object_name);
+    if(!load_texture(object->nm_name, object->normal_map)) {
+        message_log("Error loading normal map-", object->nm_name);
         return false;
     }
     //Specular Map
     object->specular_map = (Texture*)malloc(sizeof(Texture));
-    if(!load_texture(object->object_name, string("spec.png"), object->specular_map)) {
-        message_log("Error loading specular map-", object->object_name);
+    if(!load_texture(object->spec_name, object->specular_map)) {
+        message_log("Error loading specular map-", object->spec_name);
         return false;
     }
     //Model
     object->model = (Model*)malloc(sizeof(Model));
-    if(!load_model(object->object_name, object->model)) {
-        message_log("Error loading model-", object->object_name);
+    if(!load_model(object->model_name, object->model)) {
+        message_log("Error loading model-", object->model_name);
         return false;
     }
+
+    //Pack our model data in a Vertex Buffer Object and save it in a Vertex
+    //Array object
+    glGenVertexArrays(1, &object->model->vao);
+    glGenBuffers(1, &object->model->vbo);
+
+    glBindVertexArray(object->model->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, object->model->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Face)*object->model->face_count,
+        object->model->faces, GL_STATIC_DRAW);
+
+    //Bind vertices, uvs, normals, tangents, and bitangents
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(6*sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(9*sizeof(GLfloat)));
+    glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(12*sizeof(GLfloat)));
+    glEnableVertexAttribArray(4);
+
+    glBindVertexArray(0);
+
     //Shaders
-    string path;
     object->shader_program = glCreateProgram();
-    path = construct_asset_path(object->object_name, string("vertex.shader"));
+    char* path = construct_asset_path("shaders", object->vert_shader_name);
     GLuint shader_id;
     if(!load_shader(path, &shader_id, GL_VERTEX_SHADER)) {
-        message_log("Error loading vertex shader-", object->object_name);
+        message_log("Error loading vertex shader-", object->vert_shader_name);
         return false;
     }
     glAttachShader(object->shader_program, shader_id);
-    path = construct_asset_path(object->object_name, "fragment.shader");
+    path = construct_asset_path("shaders", object->frag_shader_name);
     if(!load_shader(path, &shader_id, GL_FRAGMENT_SHADER)) {
-        message_log("Error loading vertex shader-", object->object_name);
+        message_log("Error loading fragment shader-", object->frag_shader_name);
         return false;
     }
     glAttachShader(object->shader_program, shader_id);
+    glBindAttribLocation(object->shader_program, 0, "local_position");
+    glBindAttribLocation(object->shader_program, 1, "texture_coord");
+    glBindAttribLocation(object->shader_program, 2, "surface_normal");
+    glBindAttribLocation(object->shader_program, 3, "surface_tangent");
+    glBindAttribLocation(object->shader_program, 4, "surface_bitangent");
     glLinkProgram(object->shader_program);
 
     return true;
@@ -144,16 +181,20 @@ bool load_object(Object* object) {
 
 void take_screenshot() {
     //construct path TODO: better way to do string nonsense?
-    string datetime_string = get_datetime_string();
-    string output_path = State.OutputFolderPath + string("/renderer - ") +
-        datetime_string + string(".png");
+    char* datetime_string = get_datetime_string();
+    char* output_path = (char*)malloc(sizeof(char)*255);
+
+    sprintf(output_path, "%s/renderer - %s.png", State.OutputFolderPath,
+        datetime_string);
     message_log("Taking screenshot-", output_path);
 
     //write screenshot
     glReadPixels(0, 0, State.screen->width, State.screen->height,
         GL_RGB, GL_UNSIGNED_BYTE, State.screen->buffer);
     flip_texture(State.screen);
-    lodepng_encode24_file(output_path.c_str(), (const unsigned char*)State.screen->buffer,
+    lodepng_encode24_file(output_path, (const unsigned char*)State.screen->buffer,
         State.screen->width, State.screen->height);
 
+    free(datetime_string);
+    free(output_path);
 }
