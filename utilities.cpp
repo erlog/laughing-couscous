@@ -119,6 +119,41 @@ bool load_object(Object* object) {
         message_log("Error loading model-", object->model_name);
         return false;
     }
+
+    //Pack our model data in a Vertex Buffer Object and save it in a Vertex
+    //Array object
+    glGenVertexArrays(1, &object->model->vao);
+    glGenBuffers(1, &object->model->vbo);
+
+    glBindVertexArray(object->model->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, object->model->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Face)*object->model->face_count,
+        object->model->faces, GL_STATIC_DRAW);
+
+    //Bind vertices, uvs, normals, tangents, and bitangents
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(6*sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(9*sizeof(GLfloat)));
+    glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
+        (const GLvoid*)(12*sizeof(GLfloat)));
+    glEnableVertexAttribArray(4);
+
+    glBindVertexArray(0);
+
     //Shaders
     object->shader_program = glCreateProgram();
     char* path = construct_asset_path("shaders", object->vert_shader_name);
@@ -134,6 +169,11 @@ bool load_object(Object* object) {
         return false;
     }
     glAttachShader(object->shader_program, shader_id);
+    glBindAttribLocation(object->shader_program, 0, "local_position");
+    glBindAttribLocation(object->shader_program, 1, "texture_coord");
+    glBindAttribLocation(object->shader_program, 2, "surface_normal");
+    glBindAttribLocation(object->shader_program, 3, "surface_tangent");
+    glBindAttribLocation(object->shader_program, 4, "surface_bitangent");
     glLinkProgram(object->shader_program);
 
     return true;

@@ -13,14 +13,6 @@ typedef struct c_texture {
     uint8_t* buffer;
 } Texture;
 
-typedef struct c_vertex {
-    glm::vec4 v;    //Vertex
-    glm::vec3 uv;   //Texture Coordinate (vec3 for the W coord)
-    glm::vec3 n;    //Normal Vector
-    glm::vec3 t;    //Tangent Vector
-    glm::vec3 b;    //Bitangent Vector
-} Vertex;
-
 typedef struct c_face_indices {
     //Struct to store vertex indices in order to average tangent/bitangent
     //after the fact
@@ -28,6 +20,14 @@ typedef struct c_face_indices {
     int b_v_index; int b_n_index; int b_uv_index;
     int c_v_index; int c_n_index; int c_uv_index;
 } Indexed_Face;
+
+typedef struct c_vertex {
+    glm::vec3 v;    //Vertex
+    glm::vec3 uv;   //Texture Coordinate (vec3 for the W coord)
+    glm::vec3 n;    //Normal Vector
+    glm::vec3 t;    //Tangent Vector
+    glm::vec3 b;    //Bitangent Vector
+} Vertex;
 
 typedef struct c_face {
     Vertex a;
@@ -39,6 +39,9 @@ typedef struct c_model {
     char* asset_path;
     int face_count;
     Face* faces;
+    glm::mat4 model;
+    GLuint vbo;
+    GLuint vao;
 } Model;
 
 typedef struct c_object {

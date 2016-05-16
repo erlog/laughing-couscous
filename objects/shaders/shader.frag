@@ -49,8 +49,7 @@ void main() {
     float reflectivity = clamp(dot(camera_direction, reflection_vector), 0.0, 1.0);
     reflectivity = pow(reflectivity, power);
 
-
     float intensity = 0.05 + 0.45*reflectivity + 0.6*diffuse_intensity;
-    gl_FragColor = texture2D(diffuse, texture_coordinate) * intensity;
-    //gl_FragColor = normal_to_color(local_bitangent);
+    color = texture2D(diffuse, texture_coordinate) * intensity;
+    gl_FragColor = color;
 }

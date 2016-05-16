@@ -29,17 +29,6 @@ uint32_t current_time() {
     return SDL_GetTicks();
 }
 
-void send_vertex(Vertex* vertex, GLint t_loc, GLint b_loc, GLint n_loc) {
-    glm::vec4* v = &vertex->v; glm::vec3* uv = &vertex->uv;
-    glm::vec3* t = &vertex->t; glm::vec3* b = &vertex->b; glm::vec3* n = &vertex->n;
-
-    glVertexAttrib3f(t_loc, t->x, t->y, t->z);
-    glVertexAttrib3f(b_loc, b->x, b->y, b->z);
-    glVertexAttrib3f(n_loc, n->x, n->y, n->z);
-    glTexCoord2f( uv->x, uv->y );
-    glVertex3f( v->x, v->y, v->z );
-}
-
 int main() {
     //INITIALIZATION- Failures here cause a hard exit
     State.AssetFolderPath = "objects";
@@ -92,7 +81,6 @@ int main() {
     glMatrixMode( GL_PROJECTION ); glLoadIdentity();
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
     glClearColor( 0.f, 0.f, 0.f, 1.f );
-    glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
@@ -138,10 +126,9 @@ int main() {
         //TODO: is there a better way to control our framerate?
         if( State.DeltaTime > 32 ) {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
-            glRotatef(0.2f,0.1f,-0.1f,0.0f);
             //draw stuff
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glUseProgram(object.shader_program);
+            glRotatef(0.2f, 0.1f, 0.1f, 0.f);
 
             //Bind diffuse texture
             GLint uniform_location = glGetUniformLocation(object.shader_program,
@@ -164,27 +151,11 @@ int main() {
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, object.specular_map->id);
 
-            //Bind Attributes
-            GLint tangent_location = glGetAttribLocation(object.shader_program,
-                "surface_tangent");
-            GLint bitangent_location = glGetAttribLocation(object.shader_program,
-                "surface_bitangent");
-            GLint normal_location = glGetAttribLocation(object.shader_program,
-                "surface_normal");
-
-
-            glBegin( GL_TRIANGLES );
-            int face_i; Face* face;
-            for(face_i = 0; face_i < object.model->face_count; face_i++) {
-                face = &object.model->faces[face_i];
-                send_vertex(&face->a, tangent_location, bitangent_location,
-                    normal_location);
-                send_vertex(&face->b, tangent_location, bitangent_location,
-                    normal_location);
-                send_vertex(&face->c, tangent_location, bitangent_location,
-                    normal_location);
-            }
-            glEnd();
+            //Render VBO
+            glUseProgram(object.shader_program);
+            glBindVertexArray(object.model->vao);
+            glDrawArrays(GL_TRIANGLES, 0, object.model->face_count*3);
+            glBindVertexArray(0);
 
             //Debug Grid Lines
             glUseProgram(0);

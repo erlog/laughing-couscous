@@ -1,9 +1,6 @@
 void vec_print(glm::vec3 vector) {
     printf("%f, %f, %f\n", vector.x, vector.y, vector.z);
 }
-void vec_print(glm::vec4 vector) {
-    printf("%f, %f, %f\n", vector.x, vector.y, vector.z);
-}
 
 int parse_indexed_face(const char* line, int* triplet) {
     triplet[0] = 1; triplet[1] = 1; triplet[2] = 1;
@@ -38,12 +35,8 @@ glm::vec3 parse_point_string(char* line) {
     return glm::vec3(x, y, z);
 }
 
-glm::vec4 convert_vec3_vec4(glm::vec3 vertex) {
-    return glm::vec4(vertex.x, vertex.y, vertex.z, 1.f);
-}
-
 void compute_face_tb(Face* face, glm::vec3* tangent, glm::vec3* bitangent) {
-    glm::vec4 q1; glm::vec4 q2;
+    glm::vec3 q1; glm::vec3 q2;
     glm::vec3 s1t1; glm::vec3 s2t2;
     Vertex* a = &face->a; Vertex* b = &face->b; Vertex* c = &face->c;
     //q1 = b.v - a.v; q2 = c.v - a.v
@@ -138,27 +131,6 @@ int load_vec3_array(FILE* file, const char* label, glm::vec3** items) {
     return item_count;
 }
 
-int load_vec4_array(FILE* file, const char* label, glm::vec4** items) {
-    char buffer[255]; int item_count = 0;
-    while(fgets(buffer, sizeof(buffer), file) != NULL) {
-        if(strncmp(buffer, label, strlen(label)) == 0) { item_count++; }
-    }
-
-    *items = (glm::vec4*)malloc(sizeof(glm::vec4)*item_count);
-
-    int i = 0; fseek(file, 0, SEEK_SET);
-    while(fgets(buffer, sizeof(buffer), file) != NULL) {
-        if(strncmp(buffer, label, strlen(label)) == 0) {
-            (*items)[i] =
-                convert_vec3_vec4(parse_point_string(buffer+strlen(label)));
-            i++;
-        }
-    }
-
-    fseek(file, 0, SEEK_SET);
-    return item_count;
-}
-
 bool load_model(const char* model_name, Model* model) {
     //Load file
     model->asset_path = construct_asset_path("models", model_name);
@@ -168,8 +140,8 @@ bool load_model(const char* model_name, Model* model) {
         message_log("Error loading file-", model->asset_path); return false;
     }
 
-    glm::vec4* vertices;
-    int vertex_count = load_vec4_array(file, "v ", &vertices);
+    glm::vec3* vertices;
+    int vertex_count = load_vec3_array(file, "v ", &vertices);
     glm::vec3* uvs;
     int uv_count = load_vec3_array(file, "vt", &uvs);
     glm::vec3* normals;
