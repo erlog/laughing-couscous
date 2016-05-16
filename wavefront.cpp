@@ -13,7 +13,10 @@ glm::vec4 convert_vec3_vec4(glm::vec3 vertex) {
 
 int parse_face_triplet(char* line, int* result) {
     int i = 0; while(line[i] == 0x20) { i++; }
-    sscanf(&line[i], "%i/%i/%i", &result[0], &result[1], &result[2]);
+
+    result[0] = 0; result[1] = 0; result[2] = 0;
+    int results = sscanf(&line[i], "%i/%i/%i", &result[0], &result[1], &result[2]);
+
     result[0]--; result[1]--; result[2]--; //wavefront files are 1-indexed
     return i;
 }
@@ -39,22 +42,23 @@ void compute_face_tb(Face* face, glm::vec3* tangent, glm::vec3* bitangent) {
     tangent->x  = ((s2t2.y * q1.x) - (s1t1.y * q2.x)) / divisor;
     tangent->y  = ((s2t2.y * q1.y) - (s1t1.y * q2.y)) / divisor;
     tangent->z  = ((s2t2.y * q1.z) - (s1t1.y * q2.z)) / divisor;
-    normalize(tangent);
+    glm::normalize(tangent);
 
     bitangent->x = ((s1t1.x * q2.x) - (s2t2.x*q1.x)) / divisor;
     bitangent->y = ((s1t1.x * q2.y) - (s2t2.x*q1.y)) / divisor;
     bitangent->z = ((s1t1.x * q2.z) - (s2t2.x*q1.z)) / divisor;
-    normalize(bitangent);
+    glm::normalize(bitangent);
 
     return;
 }
 
-bool load_model(string object_name, Model* model) {
+bool load_model(const char* model_name, Model* model) {
     //Load file
-    model->asset_path = construct_asset_path(object_name, "object.obj");
-    char buffer[255]; FILE* file = fopen(model->asset_path.c_str(), "r");
+    model->asset_path = construct_asset_path("models", model_name);
+    char buffer[255]; FILE* file = fopen(model->asset_path, "r");
+
     if(file == NULL) {
-        //message_log("Error loading file-", model->asset_path); return false;
+        message_log("Error loading file-", model->asset_path); return false;
     }
 
     const char* vertex_label = "v"; const char* uv_label = "vt";
@@ -168,7 +172,9 @@ bool load_model(string object_name, Model* model) {
         uses = tangent_uses[tangent_i];
         tangents[tangent_i] = tangents[tangent_i] / uses;
         bitangents[tangent_i] = bitangents[tangent_i] / uses;
-        normalize(&tangents[tangent_i]); normalize(&bitangents[tangent_i]);
+
+        glm::normalize(&tangents[tangent_i]);
+        glm::normalize(&bitangents[tangent_i]);
     }
 
     //attach tangents/bitangents to faces

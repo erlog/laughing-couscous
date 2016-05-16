@@ -3,16 +3,14 @@
 #include <float.h>
 #include <math.h>
 //C++ Stuff
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
+
 //Other Libraries
 #include <GL/glew.h>
+#include <GL/glext.h>
 #include <glm/glm.hpp>
 #include <SDL.h>
 #include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
+//#include <SDL_opengl_glext.h>
 #include <ruby.h>
 #include "lodepng.cpp"
 //Namespaces
@@ -44,10 +42,6 @@ void send_vertex(Vertex* vertex, GLint t_loc, GLint b_loc, GLint n_loc) {
 }
 
 int main() {
-    glm::vec4 testpos4 = glm::vec4(1.f, 1.f, 1.f, 1.f);
-    glm::vec3 testpos3 = glm::vec3(2.f, 2.f, 2.f);
-    glm::mat4 model;
-    glm::vec4 result = model*testpos4;
     //INITIALIZATION- Failures here cause a hard exit
     State.AssetFolderPath = "objects";
     State.OutputFolderPath = "output";
@@ -58,7 +52,7 @@ int main() {
     State.DeltaTime = 0;
 
     //Initialize screen struct and buffer for taking screenshots
-    Texture screen; screen.asset_path = string("Flamerokz");
+    Texture screen; screen.asset_path = "Flamerokz";
     screen.width = 384; screen.height = screen.width; screen.bytes_per_pixel = 3;
     screen.pitch = screen.width * screen.bytes_per_pixel;
     screen.buffer_size = screen.pitch * screen.height;
@@ -73,12 +67,12 @@ int main() {
     SDL_Event event;
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         //TODO: spit out actual SDL error code
-        message_log("Couldn't initialize-","SDL"); return 0;
+        message_log("Couldn't initialize-", "SDL"); return 0;
     }
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 2 ); //Use OpenGL 2.1
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
 
-    SDL_Window* window = SDL_CreateWindow( screen.asset_path.c_str(), SDL_WINDOWPOS_CENTERED,
+    SDL_Window* window = SDL_CreateWindow( screen.asset_path, SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED, screen.width, screen.height, SDL_WINDOW_OPENGL);
     if(window == NULL) {
         message_log("Couldn't initialize-", "SDL OpenGL window"); return 0;
@@ -110,7 +104,13 @@ int main() {
     //Intialize Shaders
 
     //GAME INIT- Failures here may cause a proper smooth exit when necessary
-    Object object; object.object_name = "african_head";
+    Object object;
+    object.model_name = "african_head.obj";
+    object.texture_name = "african_head.png";
+    object.nm_name = "african_head_nm.png";
+    object.spec_name = "african_head_spec.png";
+    object.vert_shader_name = "shader.vert";
+    object.frag_shader_name = "shader.frag";
     if(!load_object(&object)) { State.IsRunning = false; };
 
     State.StartTime = current_time();
