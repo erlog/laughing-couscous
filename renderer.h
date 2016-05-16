@@ -24,9 +24,9 @@ typedef struct c_vertex {
 typedef struct c_face_indices {
     //Struct to store vertex indices in order to average tangent/bitangent
     //after the fact
-    int a_index;
-    int b_index;
-    int c_index;
+    int a_v_index; int a_n_index; int a_uv_index;
+    int b_v_index; int b_n_index; int b_uv_index;
+    int c_v_index; int c_n_index; int c_uv_index;
 } Indexed_Face;
 
 typedef struct c_face {

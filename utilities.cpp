@@ -40,8 +40,9 @@ bool load_shader(const char* shader_path, GLuint* shader_id, GLenum shader_type)
         message_log("Error loading file-", shader_path);
     }
     fseek(file, 0, SEEK_END); int length = ftell(file); fseek(file, 0, SEEK_SET);
-    GLchar* shader_source = (GLchar*)malloc(sizeof(GLchar)*length);
+    GLchar* shader_source = (GLchar*)malloc(sizeof(GLchar)*length+1);
     fread(shader_source, sizeof(GLchar), length, file);
+    shader_source[length] = (GLchar)0;
     fclose(file);
 
     //Compile shader

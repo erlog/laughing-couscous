@@ -25,7 +25,6 @@ State_Struct State;
 #include "hid_input.cpp"
 //#include "ruby_functions.cpp"
 
-
 uint32_t current_time() {
     return SDL_GetTicks();
 }
