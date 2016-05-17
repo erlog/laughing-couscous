@@ -1,5 +1,6 @@
 //Small functions that don't fit anywhere else with minimal dependencies
 char* construct_asset_path(const char* folder, const char* filename) {
+    //TODO: dynamically allocate appropriately sized string;
     char* buffer = (char*)malloc(sizeof(char)*255);
     snprintf(buffer, 254, "%s/%s/%s", State.AssetFolderPath, folder,
         filename);
@@ -8,10 +9,15 @@ char* construct_asset_path(const char* folder, const char* filename) {
 
 char* get_datetime_string() {
     time_t rawtime; struct tm *info;
-    char* output = (char*)malloc(sizeof(char)*255);
-
     time( &rawtime ); info = localtime( &rawtime );
-    strftime(output, 255,"%Y-%m-%d %H:%M:%S", info); //TODO: 255?
+
+    int output_length = 16;
+    char* output = (char*)malloc(sizeof(char)*output_length);
+    while(strftime(output, output_length,"%Y-%m-%d %H:%M:%S", info) == 0) {
+        free(output);
+        output_length *= 2;
+        output = (char*)malloc(sizeof(char)*output_length);
+    }
     return output;
 }
 
@@ -22,6 +28,9 @@ void message_log(const char* message, const char* predicate) {
 void message_log(const char* message, glm::vec3 vector) {
     printf("%i: %s (%f,%f,%f)\n", State.CurrentTime, message,
         vector.x, vector.y, vector.z);
+}
+void message_log(const char* message, float number) {
+    printf("%i: %s %f\n", State.CurrentTime, message, number);
 }
 
 void flip_texture(Texture* texture) {
@@ -87,7 +96,6 @@ bool load_texture(const char* filename, Texture* texture) {
     flip_texture(texture);
 
     //Register our texture with OpenGL
-    //TODO: error handling
     glGenTextures(1, &texture->id);
     glBindTexture(GL_TEXTURE_2D, texture->id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0,

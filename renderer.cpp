@@ -243,7 +243,7 @@ int main() {
 
     take_screenshot();
     float fps = 1000.0/((float)(State.CurrentTime-State.StartTime)/frames_drawn);
-    printf("%f FPS", fps); //TODO:use message log for this
+    message_log("FPS-", fps);
     //ruby_cleanup(0);
     SDL_Quit();
     return 0;
