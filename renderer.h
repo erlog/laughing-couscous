@@ -39,7 +39,10 @@ typedef struct c_model {
     char* asset_path;
     int face_count;
     Face* faces;
-    glm::mat4 model;
+    glm::vec3 scale;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    GLfloat rotation_angle;
     GLuint vbo;
     GLuint vao;
 } Model;
@@ -56,8 +59,14 @@ typedef struct c_object {
     Texture* texture;
     Texture* normal_map;
     Texture* specular_map;
-    GLuint shader_program; //ID assigned to our compiled shader by OpenGL
+    GLuint shader_id; //ID assigned to our compiled shader by OpenGL
 } Object;
+
+typedef struct c_camera {
+    glm::vec3 position;
+    glm::vec3 facing;
+    glm::vec3 orientation;
+} Scene_Camera;
 
 typedef struct c_state {
     const char* AssetFolderPath;
@@ -69,6 +78,10 @@ typedef struct c_state {
     uint32_t CurrentTime;
     uint32_t LastUpdateTime;
     uint32_t DeltaTime;
+    Object* Objects;
+    int ObjectCount;
+    glm::mat4 ProjectionMatrix;
+    Scene_Camera* Camera;
 } State_Struct;
 
 //Generic utility functions

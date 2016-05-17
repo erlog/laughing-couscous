@@ -7,7 +7,10 @@
 //Other Libraries
 #include <GL/glew.h>
 #include <GL/glext.h>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include <SDL.h>
 #include <SDL_opengl.h>
 //#include <SDL_opengl_glext.h>
@@ -27,6 +30,25 @@ State_Struct State;
 
 uint32_t current_time() {
     return SDL_GetTicks();
+}
+
+void bind_mat4(GLuint shader, glm::mat4 matrix, const char* variable) {
+    GLint loc = glGetUniformLocation(shader, variable);
+    if(loc != -1) {
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+    return;
+}
+
+void bind_texture(GLuint shader, Texture* texture, GLuint slot,
+    const char* variable) {
+    GLint loc = glGetUniformLocation(shader, variable);
+    if(loc != -1) {
+        glUniform1i(loc, slot);
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, texture->id);
+    }
+    return;
 }
 
 int main() {
@@ -82,26 +104,46 @@ int main() {
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
     glClearColor( 0.f, 0.f, 0.f, 1.f );
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
-    glDepthRange(1.0, -1.0); //change the handedness of the z axis
+    //glEnable(GL_CULL_FACE);
+    //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
+    //glDepthRange(1.0, -1.0); //change the handedness of the z axis
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-    //Intialize Shaders
-
     //GAME INIT- Failures here may cause a proper smooth exit when necessary
-    Object object;
-    object.model_name = "african_head.obj";
-    object.texture_name = "african_head.png";
-    object.nm_name = "african_head_nm.png";
-    object.spec_name = "african_head_spec.png";
-    object.vert_shader_name = "shader.vert";
-    object.frag_shader_name = "shader.frag";
-    if(!load_object(&object)) { State.IsRunning = false; };
+
+    //construct camera matrices
+    State.Camera = (Scene_Camera*)malloc(sizeof(Scene_Camera));
+    State.Camera->position = glm::vec3(0.f, 0.f, 3.f);
+    State.Camera->facing = glm::vec3(0.f, 0.f, -1.f);
+    State.Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
+
+    glm::mat4 projection_matrix;
+    projection_matrix = glm::perspective(glm::radians(85.f),
+        (float)screen.width/screen.height, 0.1f, 100.f);
+    State.ProjectionMatrix = projection_matrix;
+
+    //Load Objects
+    State.ObjectCount = 3;
+    State.Objects = (Object*)malloc(sizeof(Object)*3);
+    load_object(&State.Objects[0], "cube.obj", "blank.png", "blank_nm.png",
+        "blank_spec.png", "flat.vert", "flat.frag");
+    State.Objects[0].model->position = glm::vec3(0.f, 0.f, 0.f);
+    State.Objects[0].model->rotation = glm::vec3(1.f, 0.f, 0.f);
+    load_object(&State.Objects[1], "wt_teapot.obj", "blank.png", "blank_nm.png",
+        "blank_spec.png", "flat.vert", "flat.frag");
+    State.Objects[1].model->position = glm::vec3(1.5f, 0.f, 0.f);
+    State.Objects[1].model->rotation = glm::vec3(0.f, 1.f, 0.f);
+    load_object(&State.Objects[2], "african_head.obj", "blank.png", "blank_nm.png",
+        "blank_spec.png", "flat.vert", "flat.frag");
+    State.Objects[2].model->position = glm::vec3(-1.5f, 0.f, 0.f);
+    State.Objects[2].model->rotation = glm::vec3(0.f, 0.f, 1.f);
+
+    Object* object;
 
     State.StartTime = current_time();
     int frames_drawn = 0;
+    int object_i;
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
@@ -128,34 +170,47 @@ int main() {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             //draw stuff
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glRotatef(0.2f, 0.1f, 0.1f, 0.f);
 
-            //Bind diffuse texture
-            GLint uniform_location = glGetUniformLocation(object.shader_program,
-                "diffuse");
-            glUniform1i(uniform_location, 0);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, object.texture->id);
+            for(object_i = 0; object_i < State.ObjectCount; object_i++) {
+                object = &State.Objects[object_i];
+                object->model->rotation_angle += 2.0f;
 
-            //Bind normal map
-            uniform_location = glGetUniformLocation(object.shader_program,
-                "normal");
-            glUniform1i(uniform_location, 1);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, object.normal_map->id);
+                glUseProgram(object->shader_id);
+                glBindVertexArray(object->model->vao);
 
-            //Bind specular map
-            uniform_location = glGetUniformLocation(object.shader_program,
-                "specular");
-            glUniform1i(uniform_location, 2);
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, object.specular_map->id);
+                //Bind diffuse texture
+                bind_texture(object->shader_id, object->texture, 0,
+                    "diffuse");
+                bind_texture(object->shader_id, object->normal_map, 1,
+                    "normal");
+                bind_texture(object->shader_id, object->specular_map, 2,
+                    "specular");
 
-            //Render VBO
-            glUseProgram(object.shader_program);
-            glBindVertexArray(object.model->vao);
-            glDrawArrays(GL_TRIANGLES, 0, object.model->face_count*3);
-            glBindVertexArray(0);
+                //Bind matrices
+                glm::mat4 model_matrix;
+                model_matrix = glm::translate(model_matrix,
+                    object->model->position);
+                model_matrix = glm::rotate(model_matrix,
+                    glm::radians(object->model->rotation_angle),
+                    object->model->rotation);
+                model_matrix = glm::scale(model_matrix, object->model->scale);
+                bind_mat4(object->shader_id, model_matrix, "model");
+
+                glm::mat4 view_matrix;
+                view_matrix = glm::lookAt(State.Camera->position,
+                    State.Camera->position + State.Camera->facing,
+                    State.Camera->orientation);
+
+                bind_mat4(object->shader_id, view_matrix, "view");
+                bind_mat4(object->shader_id, State.ProjectionMatrix,
+                    "projection");
+
+                //Render VAO
+                glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);
+
+                //Unbind VAO
+                glBindVertexArray(0);
+            }
 
             //Debug Grid Lines
             glUseProgram(0);

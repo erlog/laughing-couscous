@@ -19,6 +19,11 @@ void message_log(const char* message, const char* predicate) {
     printf("%i: %s %s\n", State.CurrentTime, message, predicate);
 }
 
+void message_log(const char* message, glm::vec3 vector) {
+    printf("%i: %s (%f,%f,%f)\n", State.CurrentTime, message,
+        vector.x, vector.y, vector.z);
+}
+
 void flip_texture(Texture* texture) {
     uint8_t* buffer = (uint8_t*)malloc(texture->buffer_size);
     int src_i; int dest_i; int y; int x;
@@ -94,7 +99,16 @@ bool load_texture(const char* filename, Texture* texture) {
     return true;
 }
 
-bool load_object(Object* object) {
+bool load_object(Object* object, const char* model_name,
+    const char* texture_name, const char* nm_name, const char* spec_name,
+    const char* vert_shader_name, const char* frag_shader_name) {
+
+    //Load filenames in object
+    object->model_name = model_name; object->texture_name = texture_name;
+    object->nm_name = nm_name; object->spec_name = spec_name;
+    object->vert_shader_name = vert_shader_name;
+    object->frag_shader_name = frag_shader_name;
+
     //Texture
     object->texture = (Texture*)malloc(sizeof(Texture));
     if(!load_texture(object->texture_name, object->texture)) {
@@ -119,6 +133,12 @@ bool load_object(Object* object) {
         message_log("Error loading model-", object->model_name);
         return false;
     }
+
+    //Set defaults for our position/rotation/scale information
+    object->model->scale = glm::vec3(1.f, 1.f, 1.f);
+    object->model->position = glm::vec3(0.f, 0.f, 0.f);
+    object->model->rotation = glm::vec3(1.f, 0.f, 0.f);
+    object->model->rotation_angle = 0.f;
 
     //Pack our model data in a Vertex Buffer Object and save it in a Vertex
     //Array object
@@ -155,26 +175,26 @@ bool load_object(Object* object) {
     glBindVertexArray(0);
 
     //Shaders
-    object->shader_program = glCreateProgram();
+    object->shader_id = glCreateProgram();
     char* path = construct_asset_path("shaders", object->vert_shader_name);
     GLuint shader_id;
     if(!load_shader(path, &shader_id, GL_VERTEX_SHADER)) {
         message_log("Error loading vertex shader-", object->vert_shader_name);
         return false;
     }
-    glAttachShader(object->shader_program, shader_id);
+    glAttachShader(object->shader_id, shader_id);
     path = construct_asset_path("shaders", object->frag_shader_name);
     if(!load_shader(path, &shader_id, GL_FRAGMENT_SHADER)) {
         message_log("Error loading fragment shader-", object->frag_shader_name);
         return false;
     }
-    glAttachShader(object->shader_program, shader_id);
-    glBindAttribLocation(object->shader_program, 0, "local_position");
-    glBindAttribLocation(object->shader_program, 1, "texture_coord");
-    glBindAttribLocation(object->shader_program, 2, "surface_normal");
-    glBindAttribLocation(object->shader_program, 3, "surface_tangent");
-    glBindAttribLocation(object->shader_program, 4, "surface_bitangent");
-    glLinkProgram(object->shader_program);
+    glAttachShader(object->shader_id, shader_id);
+    glBindAttribLocation(object->shader_id, 0, "local_position");
+    glBindAttribLocation(object->shader_id, 1, "texture_coord");
+    glBindAttribLocation(object->shader_id, 2, "surface_normal");
+    glBindAttribLocation(object->shader_id, 3, "surface_tangent");
+    glBindAttribLocation(object->shader_id, 4, "surface_bitangent");
+    glLinkProgram(object->shader_id);
 
     return true;
 }
