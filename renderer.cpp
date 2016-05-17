@@ -134,8 +134,9 @@ int main() {
         "blank_spec.png", "flat.vert", "flat.frag");
     State.Objects[1].model->position = glm::vec3(1.5f, 0.f, 0.f);
     State.Objects[1].model->rotation = glm::vec3(0.f, 1.f, 0.f);
-    load_object(&State.Objects[2], "african_head.obj", "blank.png", "blank_nm.png",
-        "blank_spec.png", "flat.vert", "flat.frag");
+    load_object(&State.Objects[2], "african_head.obj", "african_head.png",
+        "african_head_nm.png", "african_head_spec.png", "shader.vert",
+        "shader.frag");
     State.Objects[2].model->position = glm::vec3(-1.5f, 0.f, 0.f);
     State.Objects[2].model->rotation = glm::vec3(0.f, 0.f, 1.f);
 
