@@ -6,13 +6,14 @@
 
 //Other Libraries
 #include <GL/glew.h>
-#include <GL/glext.h>
+//#include <GL/glext.h>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 //#include <SDL_opengl_glext.h>
 #include <ruby.h>
 #include "lodepng.cpp"
@@ -79,9 +80,9 @@ int main() {
         //TODO: spit out actual SDL error code
         message_log("Couldn't initialize-", "SDL"); return 0;
     }
-    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 2 ); //Use OpenGL 2.1
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 ); //Use OpenGL 3.1
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
-
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_Window* window = SDL_CreateWindow( screen.asset_path, SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED, screen.width, screen.height, SDL_WINDOW_OPENGL);
     if(window == NULL) {
@@ -92,6 +93,7 @@ int main() {
         message_log("Couldn't get-", "OpenGL Context for window"); return 0;
     }
     SDL_GL_SetSwapInterval( 1 ); //use vsync
+    glewExperimental = GL_TRUE;
     if(glewInit() != GLEW_OK) {
         message_log("Couldn't initialize-", "GLEW"); return 0;
     }
@@ -122,6 +124,7 @@ int main() {
     projection_matrix = glm::perspective(glm::radians(85.f),
         (float)screen.width/screen.height, 0.1f, 100.f);
     State.ProjectionMatrix = projection_matrix;
+
 
     //Load Objects
     State.ObjectCount = 3;
