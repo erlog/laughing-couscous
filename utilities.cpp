@@ -1,9 +1,11 @@
 //Small functions that don't fit anywhere else with minimal dependencies
-char* construct_asset_path(const char* folder, const char* filename) {
+char* construct_asset_path(const char* folder, const char* filename,
+        const char* file_extension) {
     //TODO: dynamically allocate appropriately sized string;
+    //TODO: decide which of these are actually const
     char* buffer = (char*)malloc(sizeof(char)*255);
-    snprintf(buffer, 254, "%s/%s/%s", AssetFolderPath, folder,
-        filename);
+    snprintf(buffer, 254, "%s/%s/%s.%s", AssetFolderPath, folder,
+        filename, file_extension);
     return buffer;
 }
 
@@ -35,7 +37,7 @@ void flip_texture(Texture* texture) {
 }
 
 bool load_texture(const char* filename, Texture* texture) {
-    texture->asset_path = construct_asset_path("textures", filename);
+    texture->asset_path = construct_asset_path("textures", filename, "png");
 
     //Load PNG
     unsigned width; unsigned height;
@@ -55,71 +57,84 @@ bool load_texture(const char* filename, Texture* texture) {
     return true;
 }
 
+bool load_shader(const char* shader_name, Shader* shader) {
+    shader->asset_path_vert = construct_asset_path("shaders", shader_name, "vert");
+    shader->asset_path_frag = construct_asset_path("shaders", shader_name, "frag");
+
+    shader->id = glCreateProgram();
+    GLint program_id = shader->id; GLuint shader_id;
+
+    if(!gl_load_shader(shader->asset_path_vert, &shader_id, GL_VERTEX_SHADER)) {
+        message_log("Error loading vertex shader-", shader->asset_path_vert);
+        return false;
+    }
+    glAttachShader(program_id, shader_id);
+    if(!gl_load_shader(shader->asset_path_frag, &shader_id, GL_FRAGMENT_SHADER)) {
+        message_log("Error loading fragment shader-", shader->asset_path_frag);
+        return false;
+    }
+    glAttachShader(program_id, shader_id);
+    glBindAttribLocation(shader->id, 0, "local_position");
+    glBindAttribLocation(shader->id, 1, "texture_coord");
+    glBindAttribLocation(shader->id, 2, "surface_normal");
+    glBindAttribLocation(shader->id, 3, "surface_tangent");
+    glBindAttribLocation(shader->id, 4, "surface_bitangent");
+    glLinkProgram(shader->id);
+
+    return true;
+}
+
+void load_physics(Physics_Object* physics) {
+    physics->position = glm::vec3(0.f, 0.f, 0.f);
+    physics->velocity = 0.f;
+    physics->acceleration= 0.f;
+    physics->rotation = glm::vec3(0.f, 0.f, 0.f);
+    physics->angular_velocity = glm::vec3(0.f, 0.f, 0.f);
+}
+
 bool load_object(Object* object, const char* model_name,
     const char* texture_name, const char* nm_name, const char* spec_name,
-    const char* vert_shader_name, const char* frag_shader_name) {
-
-    //Load filenames in object
-    object->model_name = model_name; object->texture_name = texture_name;
-    object->nm_name = nm_name; object->spec_name = spec_name;
-    object->vert_shader_name = vert_shader_name;
-    object->frag_shader_name = frag_shader_name;
+    const char* shader_name) {
 
     //Texture
     object->texture = (Texture*)malloc(sizeof(Texture));
-    if(!load_texture(object->texture_name, object->texture)) {
-        message_log("Error loading texture-", object->texture_name);
+    if(!load_texture(texture_name, object->texture)) {
+        message_log("Error loading texture-", texture_name);
         return false;
     }
     //Normal Map
     object->normal_map= (Texture*)malloc(sizeof(Texture));
-    if(!load_texture(object->nm_name, object->normal_map)) {
-        message_log("Error loading normal map-", object->nm_name);
+    if(!load_texture(nm_name, object->normal_map)) {
+        message_log("Error loading normal map-", nm_name);
         return false;
     }
     //Specular Map
     object->specular_map = (Texture*)malloc(sizeof(Texture));
-    if(!load_texture(object->spec_name, object->specular_map)) {
-        message_log("Error loading specular map-", object->spec_name);
+    if(!load_texture(spec_name, object->specular_map)) {
+        message_log("Error loading specular map-", spec_name);
         return false;
     }
 
     //Model
     object->model = (Model*)malloc(sizeof(Model));
-    if(!load_model(object->model_name, object->model)) {
-        message_log("Error loading model-", object->model_name);
+    if(!load_model(model_name, object->model)) {
+        message_log("Error loading model-", model_name);
         return false;
     }
 
-    //Set defaults for our position/rotation/scale information
-    object->model->scale = glm::vec3(1.f, 1.f, 1.f);
-    object->model->position = glm::vec3(0.f, 0.f, 0.f);
-    object->model->rotation = glm::vec3(1.f, 0.f, 0.f);
-    object->model->rotation_angle = 0.f;
-
+    object->model->local_position = glm::vec3(0.f, 0.f, 0.f);
+    object->model->local_scale = glm::vec3(1.f, 1.f, 1.f);
+    object->model->local_rotation_angle = 0.f;
+    object->model->local_rotation = glm::vec3(1.f, 0.f, 0.f);
     gl_register_model(object->model);
 
+    //Physics
+    object->physics = (Physics_Object*)malloc(sizeof(Physics_Object));
+    load_physics(object->physics);
+
     //Shaders
-    object->shader_id = glCreateProgram();
-    char* path = construct_asset_path("shaders", object->vert_shader_name);
-    GLuint shader_id;
-    if(!gl_load_shader(path, &shader_id, GL_VERTEX_SHADER)) {
-        message_log("Error loading vertex shader-", object->vert_shader_name);
-        return false;
-    }
-    glAttachShader(object->shader_id, shader_id);
-    path = construct_asset_path("shaders", object->frag_shader_name);
-    if(!gl_load_shader(path, &shader_id, GL_FRAGMENT_SHADER)) {
-        message_log("Error loading fragment shader-", object->frag_shader_name);
-        return false;
-    }
-    glAttachShader(object->shader_id, shader_id);
-    glBindAttribLocation(object->shader_id, 0, "local_position");
-    glBindAttribLocation(object->shader_id, 1, "texture_coord");
-    glBindAttribLocation(object->shader_id, 2, "surface_normal");
-    glBindAttribLocation(object->shader_id, 3, "surface_tangent");
-    glBindAttribLocation(object->shader_id, 4, "surface_bitangent");
-    glLinkProgram(object->shader_id);
+    object->shader = (Shader*)malloc(sizeof(Shader));
+    load_shader(shader_name, object->shader);
 
     return true;
 }

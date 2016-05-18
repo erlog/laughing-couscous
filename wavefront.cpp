@@ -133,7 +133,7 @@ int load_vec3_array(FILE* file, const char* label, glm::vec3** items) {
 
 bool load_model(const char* model_name, Model* model) {
     //Load file
-    model->asset_path = construct_asset_path("models", model_name);
+    model->asset_path = construct_asset_path("models", model_name, "obj");
     char buffer[255]; FILE* file = fopen(model->asset_path, "r");
 
     if(file == NULL) {

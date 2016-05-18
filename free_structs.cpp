@@ -1,8 +1,7 @@
-#ifndef RENDERER_H
-#define RENDERER_H
-//Globals
-const char* AssetFolderPath = "objects";
-const char* OutputFolderPath = "output";
+//TODO: finish this
+void free_texture(Texture *) {
+    free(
+}
 
 //Structs
 typedef struct c_texture {
@@ -42,28 +41,15 @@ typedef struct c_model {
     const char* asset_path;
     int face_count;
     Face* faces;
-    glm::vec3 local_position; //local position offset
-    glm::vec3 local_scale; //local scale of the model
-    GLfloat local_rotation_angle;
-    glm::vec3 local_rotation; //local rotation of the model
+    glm::vec3 scale; //local scale of the model
     GLuint vbo; //index of the Vertex Buffer object in OpenGL
     GLuint vao; //index of the Vertex Array object in OpenGL
 } Model;
 
 typedef struct shader {
-    const char* asset_path_vert;
-    const char* asset_path_frag;
+    const char* asset_path;
     GLuint id; //ID assigned to the shader program by OpenGL
-} Shader;
-
-typedef struct c_physics_object {
-    glm::vec3 position; //where in world-space something is in meters
-    GLfloat velocity;   //how fast something is moving in meters/sec
-    GLfloat acceleration; //how much the meters/sec changes over time
-    glm::vec3 rotation;  //which direction something is facing
-    GLfloat rotation_angle; //how far something is facing in that direction
-    glm::vec3 angular_velocity; //how much in degrees/sec rotation changes over time
-} Physics_Object;
+}
 
 typedef struct c_object {
     //TODO: write code to free an object from memory
@@ -72,8 +58,15 @@ typedef struct c_object {
     Texture* normal_map;
     Texture* specular_map;
     Shader* shader;
-    Physics_Object* physics;
 } Object;
+
+typedef struct c_physics_object {
+    glm::vec3 position; //where in world-space something is in meters
+    GLfloat velocity;   //how fast something is moving in meters/sec
+    GLfloat acceleration; //how much the meters/sec changes over time
+    glm::vec3 rotation;  //which direction something is facing
+    glm::vec3 angular_velocity; //how much in degrees/sec rotation changes over time
+} Physics_Object;
 
 typedef struct c_camera {
     glm::vec3 position;
@@ -106,8 +99,7 @@ typedef struct c_state {
 
 //Generic utility functions
 //TODO: re-arrange source to not require any functions here
-char* construct_asset_path(const char* folder, const char* filename,
-        const char* file_extension);
+char* construct_asset_path(const char* folder, const char* filename);
 
 #endif
 

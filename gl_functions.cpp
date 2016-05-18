@@ -46,33 +46,36 @@ void gl_recompute_camera_vector(Scene_Camera* camera) {
 }
 
 void gl_draw_object(Scene_Camera* camera, Object* object) {
-    glUseProgram(object->shader_id);
+    glUseProgram(object->shader->id);
     glBindVertexArray(object->model->vao);
 
     //Bind diffuse texture
-    gl_bind_texture(object->shader_id, object->texture, 0,
+    gl_bind_texture(object->shader->id, object->texture, 0,
         "diffuse");
-    gl_bind_texture(object->shader_id, object->normal_map, 1,
+    gl_bind_texture(object->shader->id, object->normal_map, 1,
         "normal");
-    gl_bind_texture(object->shader_id, object->specular_map, 2,
+    gl_bind_texture(object->shader->id, object->specular_map, 2,
         "specular");
 
     //Bind matrices
     glm::mat4 model_matrix;
     model_matrix = glm::translate(model_matrix,
-        object->model->position);
+        object->physics->position + object->model->local_position);
     model_matrix = glm::rotate(model_matrix,
-        glm::radians(object->model->rotation_angle),
-        object->model->rotation);
-    model_matrix = glm::scale(model_matrix, object->model->scale);
-    gl_bind_mat4(object->shader_id, model_matrix, "model");
+        glm::radians(object->model->local_rotation_angle),
+        object->model->local_rotation);
+    model_matrix = glm::rotate(model_matrix,
+        glm::radians(object->physics->rotation_angle),
+        object->physics->rotation);
+    model_matrix = glm::scale(model_matrix, object->model->local_scale);
+    gl_bind_mat4(object->shader->id, model_matrix, "model");
 
     glm::mat4 view_matrix;
     view_matrix = glm::lookAt(camera->position,
         camera->position + camera->facing, camera->orientation);
 
-    gl_bind_mat4(object->shader_id, view_matrix, "view");
-    gl_bind_mat4(object->shader_id, camera->projection,
+    gl_bind_mat4(object->shader->id, view_matrix, "view");
+    gl_bind_mat4(object->shader->id, camera->projection,
         "projection");
 
     //Render VAO

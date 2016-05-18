@@ -40,7 +40,7 @@ int main() {
 
     //Initialize screen struct and buffer for taking screenshots
     Texture screen; screen.asset_path = "Flamerokz";
-    screen.width = 384; screen.height = screen.width; screen.bytes_per_pixel = 3;
+    screen.width = 682; screen.height = 384; screen.bytes_per_pixel = 3;
     screen.pitch = screen.width * screen.bytes_per_pixel;
     screen.buffer_size = screen.pitch * screen.height;
     screen.buffer = (uint8_t*)malloc(screen.buffer_size);
@@ -101,6 +101,7 @@ int main() {
     state.Camera->pitch = 0.f;
     state.Camera->deceleration = 0.025f;
     state.Camera->velocity = 0.f;
+    state.Camera->rotation_speed = 60.f;
     gl_recompute_camera_vector(state.Camera);
 
     //Construct Camera Matrices
@@ -113,19 +114,19 @@ int main() {
     //Load Objects
     state.ObjectCount = 3;
     state.Objects = (Object*)malloc(sizeof(Object)*3);
-    load_object(&state.Objects[0], "cube.obj", "blank.png", "blank_nm.png",
-        "blank_spec.png", "flat.vert", "flat.frag");
-    state.Objects[0].model->position = glm::vec3(0.f, 0.f, 0.f);
-    state.Objects[0].model->rotation = glm::vec3(1.f, 0.f, 0.f);
-    load_object(&state.Objects[1], "wt_teapot.obj", "blank.png", "blank_nm.png",
-        "blank_spec.png", "flat.vert", "flat.frag");
-    state.Objects[1].model->position = glm::vec3(1.5f, 0.f, 0.f);
-    state.Objects[1].model->rotation = glm::vec3(0.f, 1.f, 0.f);
-    load_object(&state.Objects[2], "african_head.obj", "african_head.png",
-        "african_head_nm.png", "african_head_spec.png", "shader.vert",
-        "shader.frag");
-    state.Objects[2].model->position = glm::vec3(-1.5f, 0.f, 0.f);
-    state.Objects[2].model->rotation = glm::vec3(0.f, 0.f, 1.f);
+    load_object(&state.Objects[0], "cube", "blank", "blank_nm", "blank_spec",
+        "flat");
+    state.Objects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
+    state.Objects[0].physics->rotation = glm::vec3(1.f, 0.f, 0.f);
+    load_object(&state.Objects[1], "wt_teapot", "blank", "blank_nm",
+        "blank_spec", "flat");
+    state.Objects[1].model->local_position = glm::vec3(0.f, -0.5f, 0.f);
+    state.Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
+    state.Objects[1].physics->rotation = glm::vec3(0.f, 1.f, 0.f);
+    load_object(&state.Objects[2], "african_head", "african_head",
+        "african_head_nm", "african_head_spec", "shader");
+    state.Objects[2].physics->position = glm::vec3(-1.5f, 0.f, 0.f);
+    state.Objects[2].physics->rotation = glm::vec3(0.f, 0.f, 1.f);
 
     Object* object;
 
@@ -159,11 +160,16 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //animate camera
+            //TODO: generalize physics stuff to a struct in order to handle
+            //generically updating all physics objects
             state.Camera->position +=
-                (state.DeltaTimeS * state.Camera->velocity * state.Camera->facing);
+                (state.DeltaTimeS * state.Camera->velocity *
+                    state.Camera->facing);
 
             state.Camera->yaw +=
-                (state.DeltaTimeS * state.Camera->rotational_velocity * 60.f);
+                (state.DeltaTimeS * state.Camera->rotational_velocity *
+                    state.Camera->rotation_speed);
+
             state.Camera->velocity *= 0.95f;
             state.Camera->rotational_velocity *= 0.95f;
 
@@ -171,7 +177,8 @@ int main() {
 
             //draw objects
             for(int i = 0; i < state.ObjectCount; i++) {
-                state.Objects[i].model->rotation_angle += (state.DeltaTimeS * 60.f);
+                state.Objects[i].physics->rotation_angle +=
+                    (state.DeltaTimeS * 60.f);
                 gl_draw_object(state.Camera, &state.Objects[i]);
             }
 
