@@ -56,12 +56,12 @@ void compute_face_tb(Face* face, glm::vec3* tangent, glm::vec3* bitangent) {
     tangent->x  = ((s2t2.y * q1.x) - (s1t1.y * q2.x)) / divisor;
     tangent->y  = ((s2t2.y * q1.y) - (s1t1.y * q2.y)) / divisor;
     tangent->z  = ((s2t2.y * q1.z) - (s1t1.y * q2.z)) / divisor;
-    glm::normalize(tangent);
+    normalize(tangent);
 
     bitangent->x = ((s1t1.x * q2.x) - (s2t2.x*q1.x)) / divisor;
     bitangent->y = ((s1t1.x * q2.y) - (s2t2.x*q1.y)) / divisor;
     bitangent->z = ((s1t1.x * q2.z) - (s2t2.x*q1.z)) / divisor;
-    glm::normalize(bitangent);
+    normalize(bitangent);
 
     return;
 }
@@ -153,10 +153,9 @@ bool load_model(const char* model_name, Model* model) {
 
     //Assemble Faces
     Face* faces = (Face*)malloc(sizeof(Face)*face_count);
-    int i;
     Indexed_Face indexed_face;
     Face face;
-    for(i = 0; i < face_count; i++) {
+    for(int i = 0; i < face_count; i++) {
         indexed_face = indexed_faces[i];
         face.a.v = vertices[indexed_face.a_v_index];
         face.a.uv = uvs[indexed_face.a_uv_index];
@@ -189,14 +188,14 @@ bool load_model(const char* model_name, Model* model) {
     glm::vec3* tangents = (glm::vec3*)malloc(sizeof(glm::vec3)*vertex_count);
     glm::vec3* bitangents = (glm::vec3*)malloc(sizeof(glm::vec3)*vertex_count);
 
-    for(i = 0; i < vertex_count; i++) {
+    for(int i = 0; i < vertex_count; i++) {
         tangents[i] = glm::vec3(0.f, 0.f, 0.f);
         bitangents[i] = glm::vec3(0.f, 0.f, 0.f);
         tangent_uses[i] = 0.f;
     }
 
     glm::vec3 tangent; glm::vec3 bitangent;
-    for(i = 0; i < face_count; i++) {
+    for(int i = 0; i < face_count; i++) {
         //Compute tangent/bitangent, prep for averaging
         compute_face_tb(&faces[i], &tangent, &bitangent);
 
@@ -215,18 +214,18 @@ bool load_model(const char* model_name, Model* model) {
 
     //compute average tangent/bitangent for each vertex
     float uses;
-    for(i = 0; i < vertex_count; i++) {
+    for(int i = 0; i < vertex_count; i++) {
         uses = tangent_uses[i];
         tangents[i] = tangents[i] / uses;
         bitangents[i] = bitangents[i] / uses;
 
-        glm::normalize(&tangents[i]);
-        glm::normalize(&bitangents[i]);
+        normalize(&tangents[i]);
+        normalize(&bitangents[i]);
     }
 
     //attach tangents/bitangents to faces
     int vertex_index;
-    for(i = 0; i < face_count; i++) {
+    for(int i = 0; i < face_count; i++) {
         faces[i].a.t = tangents[indexed_faces[i].a_v_index];
         faces[i].a.b = bitangents[indexed_faces[i].a_v_index];
         faces[i].b.t = tangents[indexed_faces[i].b_v_index];

@@ -2,28 +2,28 @@
 #include <time.h>
 #include <float.h>
 #include <math.h>
+#include <stdarg.h>
 //C++ Stuff
 
 //Other Libraries
 #include <GL/glew.h>
-//#include <GL/glext.h>
+#include <GL/glext.h>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <SDL.h>
 #include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
 //#include <SDL_opengl_glext.h>
 #include <ruby.h>
-#include "lodepng.cpp"
+#include "lodepng.hpp"
 //Namespaces
 using namespace std;
 //Local Headers
 #include "renderer.h"
-//State Struct
-State_Struct State;
 //Local Includes
+#include "logging.cpp"
+#include "gl_functions.cpp"
 #include "wavefront.cpp"
 #include "utilities.cpp"
 #include "hid_input.cpp"
@@ -33,34 +33,10 @@ uint32_t current_time() {
     return SDL_GetTicks();
 }
 
-void bind_mat4(GLuint shader, glm::mat4 matrix, const char* variable) {
-    GLint loc = glGetUniformLocation(shader, variable);
-    if(loc != -1) {
-        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
-    }
-    return;
-}
-
-void bind_texture(GLuint shader, Texture* texture, GLuint slot,
-    const char* variable) {
-    GLint loc = glGetUniformLocation(shader, variable);
-    if(loc != -1) {
-        glUniform1i(loc, slot);
-        glActiveTexture(GL_TEXTURE0 + slot);
-        glBindTexture(GL_TEXTURE_2D, texture->id);
-    }
-    return;
-}
-
 int main() {
     //INITIALIZATION- Failures here cause a hard exit
-    State.AssetFolderPath = "objects";
-    State.OutputFolderPath = "output";
-    State.IsRunning = true;
-    State.StartTime = 0;
-    State.CurrentTime = 0;
-    State.LastUpdateTime = 0;
-    State.DeltaTime = 0;
+    State state = {0};
+    state.IsRunning = true;
 
     //Initialize screen struct and buffer for taking screenshots
     Texture screen; screen.asset_path = "Flamerokz";
@@ -68,7 +44,7 @@ int main() {
     screen.pitch = screen.width * screen.bytes_per_pixel;
     screen.buffer_size = screen.pitch * screen.height;
     screen.buffer = (uint8_t*)malloc(screen.buffer_size);
-    State.screen = &screen;
+    state.screen = &screen;
 
     //Start Ruby
     //ruby_setup_render_environment();
@@ -76,9 +52,8 @@ int main() {
 
     //Initialize SDL and OpenGL
     SDL_Event event;
-    if(SDL_Init(SDL_INIT_VIDEO) != 0) {
-        //TODO: spit out actual SDL error code
-        message_log("Couldn't initialize-", "SDL"); return 0;
+    int error = SDL_Init(SDL_INIT_VIDEO); if(error != 0) {
+        message_log("SDL Init Error, Code", error); return 0;
     }
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 ); //Use OpenGL 3.1
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
@@ -92,7 +67,11 @@ int main() {
     if(context == NULL) {
         message_log("Couldn't get-", "OpenGL Context for window"); return 0;
     }
-    SDL_GL_SetSwapInterval( 1 ); //use vsync
+    if(SDL_GL_SetSwapInterval(1) != 0) { //try for vsync
+        SDL_GL_SetSwapInterval(-1); //late-swap tearing if the vsync call fails
+    }
+
+    //GLEW
     glewExperimental = GL_TRUE;
     if(glewInit() != GLEW_OK) {
         message_log("Couldn't initialize-", "GLEW"); return 0;
@@ -114,140 +93,96 @@ int main() {
 
     //GAME INIT- Failures here may cause a proper smooth exit when necessary
 
-    //construct camera matrices
-    State.Camera = (Scene_Camera*)malloc(sizeof(Scene_Camera));
-    State.Camera->position = glm::vec3(0.f, 0.f, 3.f);
-    State.Camera->facing = glm::vec3(0.f, 0.f, -1.f);
-    State.Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
+    //Construct Camera
+    state.Camera = (Scene_Camera*)malloc(sizeof(Scene_Camera));
+    state.Camera->position = glm::vec3(0.f, 0.f, 3.f);
+    state.Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
+    state.Camera->yaw = 270.f;
+    state.Camera->pitch = 0.f;
+    gl_recompute_camera_vector(state.Camera);
 
+    //Construct Camera Matrices
     glm::mat4 projection_matrix;
     projection_matrix = glm::perspective(glm::radians(85.f),
         (float)screen.width/screen.height, 0.1f, 100.f);
-    State.ProjectionMatrix = projection_matrix;
+    state.Camera->projection = projection_matrix;
 
 
     //Load Objects
-    State.ObjectCount = 3;
-    State.Objects = (Object*)malloc(sizeof(Object)*3);
-    load_object(&State.Objects[0], "cube.obj", "blank.png", "blank_nm.png",
+    state.ObjectCount = 3;
+    state.Objects = (Object*)malloc(sizeof(Object)*3);
+    load_object(&state.Objects[0], "cube.obj", "blank.png", "blank_nm.png",
         "blank_spec.png", "flat.vert", "flat.frag");
-    State.Objects[0].model->position = glm::vec3(0.f, 0.f, 0.f);
-    State.Objects[0].model->rotation = glm::vec3(1.f, 0.f, 0.f);
-    load_object(&State.Objects[1], "wt_teapot.obj", "blank.png", "blank_nm.png",
+    state.Objects[0].model->position = glm::vec3(0.f, 0.f, 0.f);
+    state.Objects[0].model->rotation = glm::vec3(1.f, 0.f, 0.f);
+    load_object(&state.Objects[1], "wt_teapot.obj", "blank.png", "blank_nm.png",
         "blank_spec.png", "flat.vert", "flat.frag");
-    State.Objects[1].model->position = glm::vec3(1.5f, 0.f, 0.f);
-    State.Objects[1].model->rotation = glm::vec3(0.f, 1.f, 0.f);
-    load_object(&State.Objects[2], "african_head.obj", "african_head.png",
+    state.Objects[1].model->position = glm::vec3(1.5f, 0.f, 0.f);
+    state.Objects[1].model->rotation = glm::vec3(0.f, 1.f, 0.f);
+    load_object(&state.Objects[2], "african_head.obj", "african_head.png",
         "african_head_nm.png", "african_head_spec.png", "shader.vert",
         "shader.frag");
-    State.Objects[2].model->position = glm::vec3(-1.5f, 0.f, 0.f);
-    State.Objects[2].model->rotation = glm::vec3(0.f, 0.f, 1.f);
+    state.Objects[2].model->position = glm::vec3(-1.5f, 0.f, 0.f);
+    state.Objects[2].model->rotation = glm::vec3(0.f, 0.f, 1.f);
 
     Object* object;
 
-    State.StartTime = current_time();
-    int frames_drawn = 0;
-    int object_i;
+    state.StartTime = current_time();
+    state.LastFPSUpdateTime = state.StartTime;
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
 
-    while(State.IsRunning) {
-        State.CurrentTime = current_time();
-        State.DeltaTime = State.CurrentTime - State.LastUpdateTime;
+    while(state.IsRunning) {
+        state.CurrentTime = current_time();
+        state.DeltaTime = state.CurrentTime - state.LastUpdateTime;
 
         while(SDL_PollEvent(&event)) { switch(event.type) {
             case SDL_WINDOWEVENT:
                 break;
 
             case SDL_KEYDOWN:
-                handle_keyboard(event.key);
+                handle_keyboard(&state, event.key);
                 break;
 
             case SDL_QUIT:
-                State.IsRunning = false;
+                state.IsRunning = false;
                 break;
         } }
 
         //TODO: is there a better way to control our framerate?
-        if( State.DeltaTime > 32 ) {
+        if( state.DeltaTime > 32 ) {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             //draw stuff
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            for(object_i = 0; object_i < State.ObjectCount; object_i++) {
-                object = &State.Objects[object_i];
-                object->model->rotation_angle += 2.0f;
-
-                glUseProgram(object->shader_id);
-                glBindVertexArray(object->model->vao);
-
-                //Bind diffuse texture
-                bind_texture(object->shader_id, object->texture, 0,
-                    "diffuse");
-                bind_texture(object->shader_id, object->normal_map, 1,
-                    "normal");
-                bind_texture(object->shader_id, object->specular_map, 2,
-                    "specular");
-
-                //Bind matrices
-                glm::mat4 model_matrix;
-                model_matrix = glm::translate(model_matrix,
-                    object->model->position);
-                model_matrix = glm::rotate(model_matrix,
-                    glm::radians(object->model->rotation_angle),
-                    object->model->rotation);
-                model_matrix = glm::scale(model_matrix, object->model->scale);
-                bind_mat4(object->shader_id, model_matrix, "model");
-
-                glm::mat4 view_matrix;
-                view_matrix = glm::lookAt(State.Camera->position,
-                    State.Camera->position + State.Camera->facing,
-                    State.Camera->orientation);
-
-                bind_mat4(object->shader_id, view_matrix, "view");
-                bind_mat4(object->shader_id, State.ProjectionMatrix,
-                    "projection");
-
-                //Render VAO
-                glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);
-
-                //Unbind VAO
-                glBindVertexArray(0);
+            for(int i = 0; i < state.ObjectCount; i++) {
+                gl_draw_object(state.Camera, &state.Objects[i]);
             }
 
-            //Debug Grid Lines
-            glUseProgram(0);
-
-            glBegin( GL_LINES);
-            glColor3f(1.0, 0.0, 0.0);
-            glVertex3f(0.0, 0.0, 0.0);
-            glVertex3f(1.0, 0.0, 0.0);
-            glColor3f(0.0, 1.0, 0.0);
-            glVertex3f(0.0, 0.0, 0.0);
-            glVertex3f(0.0, 1.0, 0.0);
-            glColor3f(0.0, 0.0, 1.0);
-            glVertex3f(0.0, 0.0, 0.0);
-            glVertex3f(0.0, 0.0, -1.0);
-            glEnd();
-
-            glBegin(GL_POINTS);
-            glColor3f(1.0, 1.0, 1.0);
-            glVertex3f(1.0, 0.0, 0.0);
-            glVertex3f(0.0, 1.0, 0.0);
-            glVertex3f(0.0, 0.0, -1.0);
-            glEnd();
+            gl_draw_debug_grid_lines();
 
             SDL_GL_SwapWindow(window);
-            State.LastUpdateTime = State.CurrentTime;
-            frames_drawn++;
+            state.LastUpdateTime = state.CurrentTime;
+            state.FrameCounter += 1;
+
+            //Spit out FPS info
+            if(state.FrameCounter > 100) {
+                float fps = (float)state.FrameCounter;
+
+                fps /= (state.CurrentTime - state.LastFPSUpdateTime);
+
+
+                message_log("FPS-", fps*1000);
+                state.FrameCounter = 0;
+                state.LastFPSUpdateTime = state.CurrentTime;
+            }
         }
+
     }
 
-    take_screenshot();
-    float fps = 1000.0/((float)(State.CurrentTime-State.StartTime)/frames_drawn);
-    message_log("FPS-", fps);
-    //ruby_cleanup(0);
+    take_screenshot(&state);
     SDL_Quit();
+    //ruby_cleanup(0);
     return 0;
 }

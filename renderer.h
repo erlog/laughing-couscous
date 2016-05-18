@@ -1,5 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
+//Globals
+const char* AssetFolderPath = "objects";
+const char* OutputFolderPath = "output";
 
 //Structs
 typedef struct c_texture {
@@ -66,11 +69,12 @@ typedef struct c_camera {
     glm::vec3 position;
     glm::vec3 facing;
     glm::vec3 orientation;
+    GLfloat yaw;
+    GLfloat pitch;
+    glm::mat4 projection;
 } Scene_Camera;
 
 typedef struct c_state {
-    const char* AssetFolderPath;
-    const char* OutputFolderPath;
     bool IsRunning;
     bool IsPaused;
     Texture* screen;
@@ -78,15 +82,16 @@ typedef struct c_state {
     uint32_t CurrentTime;
     uint32_t LastUpdateTime;
     uint32_t DeltaTime;
+    uint32_t FrameCounter;
+    uint32_t LastFPSUpdateTime;
     Object* Objects;
     int ObjectCount;
-    glm::mat4 ProjectionMatrix;
     Scene_Camera* Camera;
-} State_Struct;
+} State;
 
 //Generic utility functions
+//TODO: re-arrange source to not require any functions here
 char* construct_asset_path(const char* folder, const char* filename);
-void message_log(const char* message, const char* predicate);
 
 #endif
 

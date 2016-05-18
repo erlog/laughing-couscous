@@ -2,7 +2,7 @@
 char* construct_asset_path(const char* folder, const char* filename) {
     //TODO: dynamically allocate appropriately sized string;
     char* buffer = (char*)malloc(sizeof(char)*255);
-    snprintf(buffer, 254, "%s/%s/%s", State.AssetFolderPath, folder,
+    snprintf(buffer, 254, "%s/%s/%s", AssetFolderPath, folder,
         filename);
     return buffer;
 }
@@ -21,22 +21,10 @@ char* get_datetime_string() {
     return output;
 }
 
-void message_log(const char* message, const char* predicate) {
-    printf("%i: %s %s\n", State.CurrentTime, message, predicate);
-}
-
-void message_log(const char* message, glm::vec3 vector) {
-    printf("%i: %s (%f,%f,%f)\n", State.CurrentTime, message,
-        vector.x, vector.y, vector.z);
-}
-void message_log(const char* message, float number) {
-    printf("%i: %s %f\n", State.CurrentTime, message, number);
-}
-
 void flip_texture(Texture* texture) {
     uint8_t* buffer = (uint8_t*)malloc(texture->buffer_size);
-    int src_i; int dest_i; int y; int x;
-    for(src_i = 0; src_i < texture->buffer_size; src_i++) {
+    int dest_i; int y; int x;
+    for(int src_i = 0; src_i < texture->buffer_size; src_i++) {
         y = src_i / texture->pitch; x = src_i % texture->pitch;
         dest_i = ((texture->height - y - 1) * texture->pitch) + x;
         buffer[dest_i] = texture->buffer[src_i];
@@ -45,38 +33,6 @@ void flip_texture(Texture* texture) {
     texture->buffer = buffer;
     return;
 }
-
-bool load_shader(const char* shader_path, GLuint* shader_id, GLenum shader_type) {
-    //Read in shader source
-    FILE* file = fopen(shader_path, "r");
-    if(file == NULL) {
-        return false;
-        message_log("Error loading file-", shader_path);
-    }
-    fseek(file, 0, SEEK_END); int length = ftell(file); fseek(file, 0, SEEK_SET);
-    GLchar* shader_source = (GLchar*)malloc(sizeof(GLchar)*length+1);
-    fread(shader_source, sizeof(GLchar), length, file);
-    shader_source[length] = (GLchar)0;
-    fclose(file);
-
-    //Compile shader
-    *shader_id = glCreateShader(shader_type);
-    glShaderSource(*shader_id, 1, (const GLchar**)&shader_source, NULL);
-    glCompileShader(*shader_id);
-
-    GLint compiled = GL_FALSE;
-    glGetShaderiv(*shader_id, GL_COMPILE_STATUS, &compiled);
-    if(compiled != GL_TRUE ) {
-        message_log("Open GL-", "error compiling shader");
-        message_log("Source:", shader_source);
-        GLchar buffer[1024];
-        glGetShaderInfoLog(*shader_id, 1024, NULL, buffer);
-        message_log("Open GL-", buffer);
-        return false;
-    }
-    return true;
-}
-
 
 bool load_texture(const char* filename, Texture* texture) {
     texture->asset_path = construct_asset_path("textures", filename);
@@ -95,15 +51,7 @@ bool load_texture(const char* filename, Texture* texture) {
     //Flip it because OpenGL coords start in the lower left
     flip_texture(texture);
 
-    //Register our texture with OpenGL
-    glGenTextures(1, &texture->id);
-    glBindTexture(GL_TEXTURE_2D, texture->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0,
-         GL_RGBA, GL_UNSIGNED_BYTE, texture->buffer);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
-    glBindTexture(GL_TEXTURE_2D, 0); //unbind the texture
+    gl_register_texture(texture);
     return true;
 }
 
@@ -135,6 +83,7 @@ bool load_object(Object* object, const char* model_name,
         message_log("Error loading specular map-", object->spec_name);
         return false;
     }
+
     //Model
     object->model = (Model*)malloc(sizeof(Model));
     if(!load_model(object->model_name, object->model)) {
@@ -148,51 +97,19 @@ bool load_object(Object* object, const char* model_name,
     object->model->rotation = glm::vec3(1.f, 0.f, 0.f);
     object->model->rotation_angle = 0.f;
 
-    //Pack our model data in a Vertex Buffer Object and save it in a Vertex
-    //Array object
-    glGenVertexArrays(1, &object->model->vao);
-    glGenBuffers(1, &object->model->vbo);
-
-    glBindVertexArray(object->model->vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, object->model->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Face)*object->model->face_count,
-        object->model->faces, GL_STATIC_DRAW);
-
-    //Bind vertices, uvs, normals, tangents, and bitangents
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
-        (const GLvoid*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
-        (const GLvoid*)(3*sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
-        (const GLvoid*)(6*sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
-
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
-        (const GLvoid*)(9*sizeof(GLfloat)));
-    glEnableVertexAttribArray(3);
-
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
-        (const GLvoid*)(12*sizeof(GLfloat)));
-    glEnableVertexAttribArray(4);
-
-    glBindVertexArray(0);
+    gl_register_model(object->model);
 
     //Shaders
     object->shader_id = glCreateProgram();
     char* path = construct_asset_path("shaders", object->vert_shader_name);
     GLuint shader_id;
-    if(!load_shader(path, &shader_id, GL_VERTEX_SHADER)) {
+    if(!gl_load_shader(path, &shader_id, GL_VERTEX_SHADER)) {
         message_log("Error loading vertex shader-", object->vert_shader_name);
         return false;
     }
     glAttachShader(object->shader_id, shader_id);
     path = construct_asset_path("shaders", object->frag_shader_name);
-    if(!load_shader(path, &shader_id, GL_FRAGMENT_SHADER)) {
+    if(!gl_load_shader(path, &shader_id, GL_FRAGMENT_SHADER)) {
         message_log("Error loading fragment shader-", object->frag_shader_name);
         return false;
     }
@@ -207,21 +124,21 @@ bool load_object(Object* object, const char* model_name,
     return true;
 }
 
-void take_screenshot() {
+void take_screenshot(State* state) {
     //construct path TODO: better way to do string nonsense?
     char* datetime_string = get_datetime_string();
     char* output_path = (char*)malloc(sizeof(char)*255);
 
-    sprintf(output_path, "%s/renderer - %s.png", State.OutputFolderPath,
+    sprintf(output_path, "%s/renderer - %s.png", OutputFolderPath,
         datetime_string);
     message_log("Taking screenshot-", output_path);
 
     //write screenshot
-    glReadPixels(0, 0, State.screen->width, State.screen->height,
-        GL_RGB, GL_UNSIGNED_BYTE, State.screen->buffer);
-    flip_texture(State.screen);
-    lodepng_encode24_file(output_path, (const unsigned char*)State.screen->buffer,
-        State.screen->width, State.screen->height);
+    glReadPixels(0, 0, state->screen->width, state->screen->height,
+        GL_RGB, GL_UNSIGNED_BYTE, state->screen->buffer);
+    flip_texture(state->screen);
+    lodepng_encode24_file(output_path, (const unsigned char*)state->screen->buffer,
+        state->screen->width, state->screen->height);
 
     free(datetime_string);
     free(output_path);

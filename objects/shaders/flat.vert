@@ -20,5 +20,5 @@ void main() {
     gl_Position = vert_matrix * vec4(local_position, 1.0);
     
     normal_matrix = transpose(inverse(mat3(view * model)));
-    local_normal = normal_matrix * surface_normal;
+    local_normal = normalize(normal_matrix * surface_normal);
 }
