@@ -99,6 +99,8 @@ int main() {
     state.Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
     state.Camera->yaw = 270.f;
     state.Camera->pitch = 0.f;
+    state.Camera->deceleration = 0.025f;
+    state.Camera->velocity = 0.f;
     gl_recompute_camera_vector(state.Camera);
 
     //Construct Camera Matrices
@@ -135,7 +137,8 @@ int main() {
 
     while(state.IsRunning) {
         state.CurrentTime = current_time();
-        state.DeltaTime = state.CurrentTime - state.LastUpdateTime;
+        state.DeltaTimeMS = state.CurrentTime - state.LastUpdateTime;
+        state.DeltaTimeS = state.DeltaTimeMS / 1000.f;
 
         while(SDL_PollEvent(&event)) { switch(event.type) {
             case SDL_WINDOWEVENT:
@@ -151,12 +154,24 @@ int main() {
         } }
 
         //TODO: is there a better way to control our framerate?
-        if( state.DeltaTime > 32 ) {
+        if( state.DeltaTimeMS > 32 ) {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
-            //draw stuff
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            //animate camera
+            state.Camera->position +=
+                (state.DeltaTimeS * state.Camera->velocity * state.Camera->facing);
+
+            state.Camera->yaw +=
+                (state.DeltaTimeS * state.Camera->rotational_velocity * 60.f);
+            state.Camera->velocity *= 0.95f;
+            state.Camera->rotational_velocity *= 0.95f;
+
+            gl_recompute_camera_vector(state.Camera);
+
+            //draw objects
             for(int i = 0; i < state.ObjectCount; i++) {
+                state.Objects[i].model->rotation_angle += (state.DeltaTimeS * 60.f);
                 gl_draw_object(state.Camera, &state.Objects[i]);
             }
 

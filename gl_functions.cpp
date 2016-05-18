@@ -46,8 +46,6 @@ void gl_recompute_camera_vector(Scene_Camera* camera) {
 }
 
 void gl_draw_object(Scene_Camera* camera, Object* object) {
-    object->model->rotation_angle += 2.0f;
-
     glUseProgram(object->shader_id);
     glBindVertexArray(object->model->vao);
 

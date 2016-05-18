@@ -67,6 +67,9 @@ typedef struct c_object {
 
 typedef struct c_camera {
     glm::vec3 position;
+    GLfloat velocity; //velocity in units per second
+    GLfloat rotational_velocity;
+    GLfloat deceleration;
     glm::vec3 facing;
     glm::vec3 orientation;
     GLfloat yaw;
@@ -81,7 +84,8 @@ typedef struct c_state {
     uint32_t StartTime;
     uint32_t CurrentTime;
     uint32_t LastUpdateTime;
-    uint32_t DeltaTime;
+    uint32_t DeltaTimeMS;
+    float DeltaTimeS;
     uint32_t FrameCounter;
     uint32_t LastFPSUpdateTime;
     Object* Objects;
