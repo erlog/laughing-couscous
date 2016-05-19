@@ -1,9 +1,16 @@
 //Small functions that don't fit anywhere else with minimal dependencies
+char* str_lit(const char* string) {
+    int length = strlen(string) + 1;
+    char* result = (char *)walloc(sizeof(char)*length);
+    strcpy(result, string);
+    return result;
+}
+
 char* construct_asset_path(const char* folder, const char* filename,
         const char* file_extension) {
     //TODO: dynamically allocate appropriately sized string;
     //TODO: decide which of these are actually const
-    char* buffer = (char*)malloc(sizeof(char)*255);
+    char* buffer = (char*)walloc(sizeof(char)*255);
     snprintf(buffer, 254, "%s/%s/%s.%s", AssetFolderPath, folder,
         filename, file_extension);
     return buffer;
@@ -14,24 +21,24 @@ char* get_datetime_string() {
     time( &rawtime ); info = localtime( &rawtime );
 
     int output_length = 16;
-    char* output = (char*)malloc(sizeof(char)*output_length);
+    char* output = (char*)walloc(sizeof(char)*output_length);
     while(strftime(output, output_length,"%Y-%m-%d %H:%M:%S", info) == 0) {
-        free(output);
+        wfree(output);
         output_length *= 2;
-        output = (char*)malloc(sizeof(char)*output_length);
+        output = (char*)walloc(sizeof(char)*output_length);
     }
     return output;
 }
 
 void flip_texture(Texture* texture) {
-    uint8_t* buffer = (uint8_t*)malloc(texture->buffer_size);
+    uint8_t* buffer = (uint8_t*)walloc(texture->buffer_size);
     int dest_i; int y; int x;
     for(int src_i = 0; src_i < texture->buffer_size; src_i++) {
         y = src_i / texture->pitch; x = src_i % texture->pitch;
         dest_i = ((texture->height - y - 1) * texture->pitch) + x;
         buffer[dest_i] = texture->buffer[src_i];
     }
-    free(texture->buffer);
+    wfree(texture->buffer);
     texture->buffer = buffer;
     return;
 }
@@ -97,26 +104,26 @@ bool load_object(Object* object, const char* model_name,
     const char* shader_name) {
 
     //Texture
-    object->texture = (Texture*)malloc(sizeof(Texture));
+    object->texture = (Texture*)walloc(sizeof(Texture));
     if(!load_texture(texture_name, object->texture)) {
         message_log("Error loading texture-", texture_name);
         return false;
     }
     //Normal Map
-    object->normal_map= (Texture*)malloc(sizeof(Texture));
+    object->normal_map= (Texture*)walloc(sizeof(Texture));
     if(!load_texture(nm_name, object->normal_map)) {
         message_log("Error loading normal map-", nm_name);
         return false;
     }
     //Specular Map
-    object->specular_map = (Texture*)malloc(sizeof(Texture));
+    object->specular_map = (Texture*)walloc(sizeof(Texture));
     if(!load_texture(spec_name, object->specular_map)) {
         message_log("Error loading specular map-", spec_name);
         return false;
     }
 
     //Model
-    object->model = (Model*)malloc(sizeof(Model));
+    object->model = (Model*)walloc(sizeof(Model));
     if(!load_model(model_name, object->model)) {
         message_log("Error loading model-", model_name);
         return false;
@@ -129,11 +136,11 @@ bool load_object(Object* object, const char* model_name,
     gl_register_model(object->model);
 
     //Physics
-    object->physics = (Physics_Object*)malloc(sizeof(Physics_Object));
+    object->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(object->physics);
 
     //Shaders
-    object->shader = (Shader*)malloc(sizeof(Shader));
+    object->shader = (Shader*)walloc(sizeof(Shader));
     load_shader(shader_name, object->shader);
 
     return true;
@@ -142,19 +149,19 @@ bool load_object(Object* object, const char* model_name,
 void take_screenshot(State* state) {
     //construct path TODO: better way to do string nonsense?
     char* datetime_string = get_datetime_string();
-    char* output_path = (char*)malloc(sizeof(char)*255);
+    char* output_path = (char*)walloc(sizeof(char)*255);
 
     sprintf(output_path, "%s/renderer - %s.png", OutputFolderPath,
         datetime_string);
     message_log("Taking screenshot-", output_path);
 
     //write screenshot
-    glReadPixels(0, 0, state->screen->width, state->screen->height,
-        GL_RGB, GL_UNSIGNED_BYTE, state->screen->buffer);
-    flip_texture(state->screen);
-    lodepng_encode24_file(output_path, (const unsigned char*)state->screen->buffer,
-        state->screen->width, state->screen->height);
+    glReadPixels(0, 0, state->Screen->width, state->Screen->height,
+        GL_RGB, GL_UNSIGNED_BYTE, state->Screen->buffer);
+    flip_texture(state->Screen);
+    lodepng_encode24_file(output_path, (const unsigned char*)state->Screen->buffer,
+        state->Screen->width, state->Screen->height);
 
-    free(datetime_string);
-    free(output_path);
+    wfree(datetime_string);
+    wfree(output_path);
 }

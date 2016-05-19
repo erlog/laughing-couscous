@@ -72,10 +72,10 @@ int load_face_array(FILE* file, const char* label, Indexed_Face** faces) {
         if(strncmp(buffer, label, strlen(label)) == 0) { item_count++; }
     }
 
-    *faces = (Indexed_Face*)malloc(sizeof(Indexed_Face)*item_count);
+    *faces = (Indexed_Face*)walloc(sizeof(Indexed_Face)*item_count);
 
     int i = 0; fseek(file, 0, SEEK_SET);
-    int pos; int* triplet = (int*)malloc(sizeof(int)*3);
+    int pos; int* triplet = (int*)walloc(sizeof(int)*3);
     Indexed_Face face;
     while(fgets(buffer, sizeof(buffer), file) != NULL) {
         if(strncmp(buffer, label, strlen(label)) == 0) {
@@ -111,13 +111,13 @@ int load_vec3_array(FILE* file, const char* label, glm::vec3** items) {
 
     if(item_count == 0) {
         item_count = 1;
-        *items = (glm::vec3*)malloc(sizeof(glm::vec3)*item_count);
+        *items = (glm::vec3*)walloc(sizeof(glm::vec3)*item_count);
         (*items)[0] = glm::vec3(0.f, 0.f, 0.f);
         fseek(file, 0, SEEK_SET);
         return 0;
     }
 
-    *items = (glm::vec3*)malloc(sizeof(glm::vec3)*item_count);
+    *items = (glm::vec3*)walloc(sizeof(glm::vec3)*item_count);
 
     int i = 0; fseek(file, 0, SEEK_SET);
     while(fgets(buffer, sizeof(buffer), file) != NULL) {
@@ -152,7 +152,7 @@ bool load_model(const char* model_name, Model* model) {
     fclose(file);
 
     //Assemble Faces
-    Face* faces = (Face*)malloc(sizeof(Face)*face_count);
+    Face* faces = (Face*)walloc(sizeof(Face)*face_count);
     Indexed_Face indexed_face;
     Face face;
     for(int i = 0; i < face_count; i++) {
@@ -179,14 +179,14 @@ bool load_model(const char* model_name, Model* model) {
 
     //bail if there's no UV's and thus we don't need tangents/bitangents
     if(uv_count == 0) {
-        free(vertices); free(uvs); free(normals); free(indexed_faces);
+        wfree(vertices); wfree(uvs); wfree(normals); wfree(indexed_faces);
         return true;
     }
 
     //initialize tangents/bitangents
-    float* tangent_uses = (float*)malloc(sizeof(float)*vertex_count);
-    glm::vec3* tangents = (glm::vec3*)malloc(sizeof(glm::vec3)*vertex_count);
-    glm::vec3* bitangents = (glm::vec3*)malloc(sizeof(glm::vec3)*vertex_count);
+    float* tangent_uses = (float*)walloc(sizeof(float)*vertex_count);
+    glm::vec3* tangents = (glm::vec3*)walloc(sizeof(glm::vec3)*vertex_count);
+    glm::vec3* bitangents = (glm::vec3*)walloc(sizeof(glm::vec3)*vertex_count);
 
     for(int i = 0; i < vertex_count; i++) {
         tangents[i] = glm::vec3(0.f, 0.f, 0.f);
@@ -234,7 +234,7 @@ bool load_model(const char* model_name, Model* model) {
         faces[i].c.b = bitangents[indexed_faces[i].c_v_index];
     }
 
-    free(vertices); free(uvs); free(normals); free(tangents); free(bitangents);
-    free(indexed_faces); free(tangent_uses);
+    wfree(vertices); wfree(uvs); wfree(normals); wfree(tangents); wfree(bitangents);
+    wfree(indexed_faces); wfree(tangent_uses);
     return true;
 }

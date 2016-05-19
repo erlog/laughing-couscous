@@ -6,16 +6,16 @@ void handle_keyboard(State* state, SDL_KeyboardEvent key) {
         case SDLK_F12:
             take_screenshot(state);
             break;
-        case SDLK_UP:
+        case SDLK_w:
             state->Camera->velocity += 0.05f;
             break;
-        case SDLK_DOWN:
+        case SDLK_s:
             state->Camera->velocity -= 0.05f;
             break;
-        case SDLK_LEFT:
+        case SDLK_a:
             state->Camera->rotational_velocity -= 0.05f;
             break;
-        case SDLK_RIGHT:
+        case SDLK_d:
             state->Camera->rotational_velocity += 0.05f;
             break;
     }

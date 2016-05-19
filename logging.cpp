@@ -22,3 +22,7 @@ void message_log(const char* message, float number) {
 void message_log(const char* message, int number) {
     printf("%i: %s %i\n", SDL_GetTicks(), message, number);
 }
+
+void message_log(const char* message, size_t number) {
+    printf("%i: %s %.2f MB\n", SDL_GetTicks(), message, number/(1024.f*1024.f));
+}

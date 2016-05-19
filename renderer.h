@@ -1,12 +1,9 @@
 #ifndef RENDERER_H
 #define RENDERER_H
-//Globals
-const char* AssetFolderPath = "objects";
-const char* OutputFolderPath = "output";
 
 //Structs
 typedef struct c_texture {
-    const char* asset_path;
+    char* asset_path;
     GLuint id;  //ID assigned to us by OpenGL
     GLsizei width;
     GLsizei height;
@@ -39,7 +36,7 @@ typedef struct c_face {
 } Face;
 
 typedef struct c_model {
-    const char* asset_path;
+    char* asset_path;
     int face_count;
     Face* faces;
     glm::vec3 local_position; //local position offset
@@ -51,8 +48,8 @@ typedef struct c_model {
 } Model;
 
 typedef struct shader {
-    const char* asset_path_vert;
-    const char* asset_path_frag;
+    char* asset_path_vert;
+    char* asset_path_frag;
     GLuint id; //ID assigned to the shader program by OpenGL
 } Shader;
 
@@ -91,7 +88,7 @@ typedef struct c_camera {
 typedef struct c_state {
     bool IsRunning;
     bool IsPaused;
-    Texture* screen;
+    Texture* Screen;
     uint32_t StartTime;
     uint32_t CurrentTime;
     uint32_t LastUpdateTime;
@@ -104,10 +101,55 @@ typedef struct c_state {
     Scene_Camera* Camera;
 } State;
 
+typedef struct c_memory {
+    size_t MemoryAllocated;
+    size_t MemoryFreed;
+} Memory_Info;
+
+//Globals
+const char* AssetFolderPath = "objects";
+const char* OutputFolderPath = "output";
+
 //Generic utility functions
 //TODO: re-arrange source to not require any functions here
 char* construct_asset_path(const char* folder, const char* filename,
         const char* file_extension);
+
+//Debug Functions
+Memory_Info* Global_State; //use this only for debug
+void* wrapped_alloc(size_t size) {
+    void* pointer = malloc(size);
+    size_t real_size = malloc_usable_size(pointer);
+    Global_State->MemoryAllocated += real_size;
+    //printf("(Mem) %lu B Allocated\n", real_size);
+    return pointer;
+}
+
+void* wrapped_realloc(void* pointer, size_t new_size) {
+    size_t real_size = malloc_usable_size(pointer);
+    Global_State->MemoryAllocated -= real_size;
+    //printf("(Mem) %lu B Deallocated\n", real_size);
+    void* new_pointer = realloc(pointer, new_size);
+    real_size = malloc_usable_size(new_pointer);
+    Global_State->MemoryAllocated += real_size;
+    //printf("(Mem) %lu B Allocated\n", real_size);
+    return new_pointer;
+}
+
+void wrapped_free(void* pointer) {
+    if(pointer == NULL) { return; }
+    size_t real_size = malloc_usable_size(pointer);
+    Global_State->MemoryFreed += real_size;
+    //printf("(Mem) %lu B Deallocated\n", real_size);
+    free(pointer); return;
+}
+
+void* (*walloc)(size_t size) = wrapped_alloc;
+void* (*wrealloc)(void* pointer, size_t new_size) = wrapped_realloc;
+void (*wfree)(void* pointer) = wrapped_free;
+//void* (*walloc)(size_t size) = malloc;
+//void* (*wrealloc)(void* pointer, size_t new_size) = realloc;
+//void (*wfree)(void* pointer) = free;
 
 #endif
 

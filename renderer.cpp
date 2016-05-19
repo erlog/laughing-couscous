@@ -3,6 +3,7 @@
 #include <float.h>
 #include <math.h>
 #include <stdarg.h>
+#include <malloc.h>
 //C++ Stuff
 
 //Other Libraries
@@ -16,12 +17,13 @@
 #include <SDL_opengl.h>
 //#include <SDL_opengl_glext.h>
 #include <ruby.h>
-#include "lodepng.hpp"
 //Namespaces
 using namespace std;
 //Local Headers
 #include "renderer.h"
 //Local Includes
+#include "lodepng.hpp"
+#include "free_structs.cpp"
 #include "logging.cpp"
 #include "gl_functions.cpp"
 #include "wavefront.cpp"
@@ -35,16 +37,19 @@ uint32_t current_time() {
 
 int main() {
     //INITIALIZATION- Failures here cause a hard exit
-    State state = {0};
-    state.IsRunning = true;
+    Memory_Info mem_info = {0}; Global_State = &mem_info;
+    State* state = (State*)walloc(sizeof(State));
+    state->IsRunning = true;
 
     //Initialize screen struct and buffer for taking screenshots
-    Texture screen; screen.asset_path = "Flamerokz";
-    screen.width = 682; screen.height = 384; screen.bytes_per_pixel = 3;
-    screen.pitch = screen.width * screen.bytes_per_pixel;
-    screen.buffer_size = screen.pitch * screen.height;
-    screen.buffer = (uint8_t*)malloc(screen.buffer_size);
-    state.screen = &screen;
+    state->Screen = (Texture*)walloc(sizeof(Texture));
+    state->Screen->asset_path = str_lit("Flamerokz");
+    state->Screen->width = 682;
+    state->Screen->height = 384;
+    state->Screen->bytes_per_pixel = 3;
+    state->Screen->pitch = state->Screen->width * state->Screen->bytes_per_pixel;
+    state->Screen->buffer_size = state->Screen->pitch * state->Screen->height;
+    state->Screen->buffer = (uint8_t*)walloc(state->Screen->buffer_size);
 
     //Start Ruby
     //ruby_setup_render_environment();
@@ -58,8 +63,9 @@ int main() {
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 ); //Use OpenGL 3.1
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_Window* window = SDL_CreateWindow( screen.asset_path, SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED, screen.width, screen.height, SDL_WINDOW_OPENGL);
+    SDL_Window* window = SDL_CreateWindow( state->Screen->asset_path,
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, state->Screen->width,
+        state->Screen->height, SDL_WINDOW_OPENGL);
     if(window == NULL) {
         message_log("Couldn't initialize-", "SDL OpenGL window"); return 0;
     }
@@ -94,117 +100,124 @@ int main() {
     //GAME INIT- Failures here may cause a proper smooth exit when necessary
 
     //Construct Camera
-    state.Camera = (Scene_Camera*)malloc(sizeof(Scene_Camera));
-    state.Camera->position = glm::vec3(0.f, 0.f, 3.f);
-    state.Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
-    state.Camera->yaw = 270.f;
-    state.Camera->pitch = 0.f;
-    state.Camera->deceleration = 0.025f;
-    state.Camera->velocity = 0.f;
-    state.Camera->rotation_speed = 60.f;
-    gl_recompute_camera_vector(state.Camera);
+    state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
+    state->Camera->position = glm::vec3(0.f, 0.f, 3.f);
+    state->Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
+    state->Camera->yaw = 270.f;
+    state->Camera->pitch = 0.f;
+    state->Camera->deceleration = 0.025f;
+    state->Camera->velocity = 0.f;
+    state->Camera->rotation_speed = 60.f;
+    gl_recompute_camera_vector(state->Camera);
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
     projection_matrix = glm::perspective(glm::radians(85.f),
-        (float)screen.width/screen.height, 0.1f, 100.f);
-    state.Camera->projection = projection_matrix;
+        (float)state->Screen->width/state->Screen->height, 0.1f, 100.f);
+    state->Camera->projection = projection_matrix;
 
 
     //Load Objects
-    state.ObjectCount = 3;
-    state.Objects = (Object*)malloc(sizeof(Object)*3);
-    load_object(&state.Objects[0], "cube", "blank", "blank_nm", "blank_spec",
+    state->ObjectCount = 3;
+    state->Objects = (Object*)walloc(sizeof(Object)*3);
+    load_object(&state->Objects[0], "cube", "blank", "blank_nm", "blank_spec",
         "flat");
-    state.Objects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
-    state.Objects[0].physics->rotation = glm::vec3(1.f, 0.f, 0.f);
-    load_object(&state.Objects[1], "wt_teapot", "blank", "blank_nm",
+    state->Objects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
+    state->Objects[0].physics->rotation = glm::vec3(1.f, 0.f, 0.f);
+    load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat");
-    state.Objects[1].model->local_position = glm::vec3(0.f, -0.5f, 0.f);
-    state.Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
-    state.Objects[1].physics->rotation = glm::vec3(0.f, 1.f, 0.f);
-    load_object(&state.Objects[2], "african_head", "african_head",
+    state->Objects[1].model->local_position = glm::vec3(0.f, -0.5f, 0.f);
+    state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
+    state->Objects[1].physics->rotation = glm::vec3(0.f, 1.f, 0.f);
+    load_object(&state->Objects[2], "african_head", "african_head",
         "african_head_nm", "african_head_spec", "shader");
-    state.Objects[2].physics->position = glm::vec3(-1.5f, 0.f, 0.f);
-    state.Objects[2].physics->rotation = glm::vec3(0.f, 0.f, 1.f);
+    state->Objects[2].physics->position = glm::vec3(-1.5f, 0.f, 0.f);
+    state->Objects[2].physics->rotation = glm::vec3(0.f, 0.f, 1.f);
 
     Object* object;
 
-    state.StartTime = current_time();
-    state.LastFPSUpdateTime = state.StartTime;
+    state->StartTime = current_time();
+    state->LastFPSUpdateTime = state->StartTime;
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
 
-    while(state.IsRunning) {
-        state.CurrentTime = current_time();
-        state.DeltaTimeMS = state.CurrentTime - state.LastUpdateTime;
-        state.DeltaTimeS = state.DeltaTimeMS / 1000.f;
+    while(state->IsRunning) {
+        state->CurrentTime = current_time();
+        state->DeltaTimeMS = state->CurrentTime - state->LastUpdateTime;
+        state->DeltaTimeS = state->DeltaTimeMS / 1000.f;
 
         while(SDL_PollEvent(&event)) { switch(event.type) {
             case SDL_WINDOWEVENT:
                 break;
 
             case SDL_KEYDOWN:
-                handle_keyboard(&state, event.key);
+                handle_keyboard(state, event.key);
                 break;
 
             case SDL_QUIT:
-                state.IsRunning = false;
+                state->IsRunning = false;
                 break;
         } }
 
         //TODO: is there a better way to control our framerate?
-        if( state.DeltaTimeMS > 32 ) {
+        if( state->DeltaTimeMS > 32 ) {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //animate camera
             //TODO: generalize physics stuff to a struct in order to handle
             //generically updating all physics objects
-            state.Camera->position +=
-                (state.DeltaTimeS * state.Camera->velocity *
-                    state.Camera->facing);
+            state->Camera->position +=
+                (state->DeltaTimeS * state->Camera->velocity *
+                    state->Camera->facing);
 
-            state.Camera->yaw +=
-                (state.DeltaTimeS * state.Camera->rotational_velocity *
-                    state.Camera->rotation_speed);
+            state->Camera->yaw +=
+                (state->DeltaTimeS * state->Camera->rotational_velocity *
+                    state->Camera->rotation_speed);
 
-            state.Camera->velocity *= 0.95f;
-            state.Camera->rotational_velocity *= 0.95f;
+            state->Camera->velocity *= 0.95f;
+            state->Camera->rotational_velocity *= 0.95f;
 
-            gl_recompute_camera_vector(state.Camera);
+            gl_recompute_camera_vector(state->Camera);
 
             //draw objects
-            for(int i = 0; i < state.ObjectCount; i++) {
-                state.Objects[i].physics->rotation_angle +=
-                    (state.DeltaTimeS * 60.f);
-                gl_draw_object(state.Camera, &state.Objects[i]);
+            for(int i = 0; i < state->ObjectCount; i++) {
+                state->Objects[i].physics->rotation_angle +=
+                    (state->DeltaTimeS * 60.f);
+                gl_draw_object(state->Camera, &state->Objects[i]);
             }
 
             gl_draw_debug_grid_lines();
 
             SDL_GL_SwapWindow(window);
-            state.LastUpdateTime = state.CurrentTime;
-            state.FrameCounter += 1;
+            state->LastUpdateTime = state->CurrentTime;
+            state->FrameCounter += 1;
 
-            //Spit out FPS info
-            if(state.FrameCounter > 100) {
-                float fps = (float)state.FrameCounter;
-
-                fps /= (state.CurrentTime - state.LastFPSUpdateTime);
-
+            //Spit out debug info
+            if(state->FrameCounter > 100) {
+                float fps = (float)state->FrameCounter;
+                fps /= (state->CurrentTime - state->LastFPSUpdateTime);
 
                 message_log("FPS-", fps*1000);
-                state.FrameCounter = 0;
-                state.LastFPSUpdateTime = state.CurrentTime;
+                message_log("Memory in use-", mem_info.MemoryAllocated -
+                    mem_info.MemoryFreed);
+
+                state->FrameCounter = 0;
+                state->LastFPSUpdateTime = state->CurrentTime;
             }
         }
 
     }
 
-    take_screenshot(&state);
-    SDL_Quit();
+    take_screenshot(state);
+    wfree_state(state);
+    //wfree_texture(state->Screen);
+    //wfree(state->Camera);
     //ruby_cleanup(0);
+    message_log("Allocated-", mem_info.MemoryAllocated);
+    message_log("Freed-", mem_info.MemoryFreed);
+    message_log("Leaked-", mem_info.MemoryAllocated - mem_info.MemoryFreed);
+    SDL_Quit();
     return 0;
 }

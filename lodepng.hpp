@@ -28,6 +28,10 @@ The manual and changelog are in the header file "lodepng.h"
 Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for C.
 */
 
+/* Changes from original:
+ 2016-05-19 -> wrapped malloc/free calls to track memory usage
+*/
+
 #include "lodepng.h"
 
 #include <limits.h>
@@ -59,20 +63,23 @@ define them in your own project's source files without needing to change
 lodepng source code. Don't forget to remove "static" if you copypaste them
 from here.*/
 
-#ifdef LODEPNG_COMPILE_ALLOCATORS
+#if 1
 static void* lodepng_malloc(size_t size)
 {
-  return malloc(size);
+    //return malloc(size);
+    return walloc(size);
 }
 
 static void* lodepng_realloc(void* ptr, size_t new_size)
 {
-  return realloc(ptr, new_size);
+    //return realloc(ptr, new_size);
+    return wrealloc(ptr, new_size);
 }
 
 static void lodepng_free(void* ptr)
 {
-  free(ptr);
+    //free(ptr);
+    return wfree(ptr);
 }
 #else /*LODEPNG_COMPILE_ALLOCATORS*/
 void* lodepng_malloc(size_t size);
