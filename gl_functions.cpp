@@ -36,15 +36,6 @@ void gl_bind_texture(GLuint shader, Texture* texture, GLuint slot,
     return;
 }
 
-void gl_recompute_camera_vector(Scene_Camera* camera) {
-    camera->facing.x = cos(glm::radians(camera->pitch)) *
-        cos(glm::radians(camera->yaw));
-    camera->facing.y = sin(glm::radians(camera->pitch));
-    camera->facing.z = cos(glm::radians(camera->pitch)) *
-        sin(glm::radians(camera->yaw));
-    normalize(&camera->facing);
-}
-
 void gl_draw_object(Scene_Camera* camera, Object* object) {
     glUseProgram(object->shader->id);
     glBindVertexArray(object->model->vao);
@@ -71,8 +62,9 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     gl_bind_mat4(object->shader->id, model_matrix, "model");
 
     glm::mat4 view_matrix;
-    view_matrix = glm::lookAt(camera->position,
-        camera->position + camera->facing, camera->orientation);
+    view_matrix = glm::lookAt(camera->physics->position,
+        camera->physics->position + camera->physics->rotation,
+        glm::vec3(0.f, 1.f, 0.f));
 
     gl_bind_mat4(object->shader->id, view_matrix, "view");
     gl_bind_mat4(object->shader->id, camera->projection,

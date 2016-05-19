@@ -56,8 +56,9 @@ typedef struct shader {
 typedef struct c_physics_object {
     glm::vec3 position; //where in world-space something is in meters
     GLfloat velocity;   //how fast something is moving in meters/sec
-    GLfloat acceleration; //how much the meters/sec changes over time
-    glm::vec3 rotation;  //which direction something is facing
+    GLfloat deceleration_factor;
+    glm::vec3 orientation;  //which direction something is facing
+    //TODO: move from Euler angles to quaternions
     GLfloat rotation_angle; //how far something is facing in that direction
     glm::vec3 angular_velocity; //how much in degrees/sec rotation changes over time
 } Physics_Object;
@@ -73,15 +74,7 @@ typedef struct c_object {
 } Object;
 
 typedef struct c_camera {
-    glm::vec3 position;
-    GLfloat velocity; //velocity in units per second
-    GLfloat rotational_velocity;
-    GLfloat rotation_speed;
-    GLfloat deceleration;
-    glm::vec3 facing;
-    glm::vec3 orientation;
-    GLfloat yaw;
-    GLfloat pitch;
+    Physics_Object* physics;
     glm::mat4 projection;
 } Scene_Camera;
 

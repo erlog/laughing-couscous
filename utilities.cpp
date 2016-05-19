@@ -1,4 +1,9 @@
 //Small functions that don't fit anywhere else with minimal dependencies
+void clamp(GLfloat* number, GLfloat min, GLfloat max) {
+    if(*number > max) { *number = max; return; }
+    if(*number < max) { *number = min; return; }
+}
+
 char* str_lit(const char* string) {
     int length = strlen(string) + 1;
     char* result = (char *)walloc(sizeof(char)*length);
@@ -94,7 +99,7 @@ bool load_shader(const char* shader_name, Shader* shader) {
 void load_physics(Physics_Object* physics) {
     physics->position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
-    physics->acceleration= 0.f;
+    physics->deceleration_factor = 0.95f;
     physics->rotation = glm::vec3(0.f, 0.f, 0.f);
     physics->angular_velocity = glm::vec3(0.f, 0.f, 0.f);
 }

@@ -1,4 +1,3 @@
-//TODO: work out if asset paths should actually be const or not
 void wfree_texture(Texture* object) {
     wfree(object->asset_path);
     wfree(object->buffer); return;
@@ -21,6 +20,11 @@ void wfree_object(Object* object) {
     wfree_texture(object->normal_map);
     wfree_texture(object->specular_map);
     wfree_shader(object->shader);
+    wfree(object->physics);
+}
+
+void wfree_camera(Scene_Camera* object) {
+    wfree(object->physics);
 }
 
 void wfree_state(State* object) {
@@ -29,6 +33,7 @@ void wfree_state(State* object) {
         wfree_object(&object->Objects[i]);
     }
     wfree(object->Objects);
+    wfree_camera(object->Camera);
     wfree(object->Camera);
     return;
 }

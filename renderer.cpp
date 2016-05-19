@@ -35,6 +35,12 @@ uint32_t current_time() {
     return SDL_GetTicks();
 }
 
+void update_physics_object(Physics_Object* object, float delta_time_s) {
+    object->position += (delta_time_s * object->velocity * object->rotation);
+    object->velocity *= (delta_time_s * object->deceleration_factor);
+    return;
+}
+
 int main() {
     //INITIALIZATION- Failures here cause a hard exit
     Memory_Info mem_info = {0}; Global_State = &mem_info;
@@ -101,14 +107,11 @@ int main() {
 
     //Construct Camera
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
-    state->Camera->position = glm::vec3(0.f, 0.f, 3.f);
-    state->Camera->orientation = glm::vec3(0.f, 1.f, 0.f);
-    state->Camera->yaw = 270.f;
-    state->Camera->pitch = 0.f;
-    state->Camera->deceleration = 0.025f;
-    state->Camera->velocity = 0.f;
-    state->Camera->rotation_speed = 60.f;
-    gl_recompute_camera_vector(state->Camera);
+    state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
+    state->Camera->physics->position = glm::vec3(0.f, 0.f, 3.f);
+    state->Camera->physics->rotation = glm::vec3(0.f, 0.f, -1.f);
+    state->Camera->physics->deceleration_factor = 26.5f;
+    state->Camera->physics->velocity = 0.f;
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -165,21 +168,8 @@ int main() {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //animate camera
-            //TODO: generalize physics stuff to a struct in order to handle
-            //generically updating all physics objects
-            state->Camera->position +=
-                (state->DeltaTimeS * state->Camera->velocity *
-                    state->Camera->facing);
-
-            state->Camera->yaw +=
-                (state->DeltaTimeS * state->Camera->rotational_velocity *
-                    state->Camera->rotation_speed);
-
-            state->Camera->velocity *= 0.95f;
-            state->Camera->rotational_velocity *= 0.95f;
-
-            gl_recompute_camera_vector(state->Camera);
+            //Update physics objects
+            update_physics_object(state->Camera->physics, state->DeltaTimeS);
 
             //draw objects
             for(int i = 0; i < state->ObjectCount; i++) {
