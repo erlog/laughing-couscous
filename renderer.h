@@ -115,18 +115,33 @@ char* construct_asset_path(const char* folder, const char* filename,
 Memory_Info* Global_State; //use this only for debug
 void* wrapped_alloc(size_t size) {
     void* pointer = malloc(size);
-    size_t real_size = malloc_usable_size(pointer);
+    #if LINUX_COMPILE
+        size_t real_size = malloc_size(pointer);
+    #endif
+    #if MAC_COMPILE
+        size_t real_size = malloc_size(pointer);
+    #endif
     Global_State->MemoryAllocated += real_size;
     //printf("(Mem) %lu B Allocated\n", real_size);
     return pointer;
 }
 
 void* wrapped_realloc(void* pointer, size_t new_size) {
-    size_t real_size = malloc_usable_size(pointer);
+    #if LINUX_COMPILE
+        size_t real_size = malloc_usable_size(pointer);
+    #endif
+    #if MAC_COMPILE
+        size_t real_size = malloc_size(pointer);
+    #endif
     Global_State->MemoryAllocated -= real_size;
     //printf("(Mem) %lu B Deallocated\n", real_size);
     void* new_pointer = realloc(pointer, new_size);
-    real_size = malloc_usable_size(new_pointer);
+    #if LINUX_COMPILE
+        real_size = malloc_usable_size(new_pointer);
+    #endif
+    #if MAC_COMPILE
+        real_size = malloc_size(new_pointer);
+    #endif
     Global_State->MemoryAllocated += real_size;
     //printf("(Mem) %lu B Allocated\n", real_size);
     return new_pointer;
@@ -134,7 +149,12 @@ void* wrapped_realloc(void* pointer, size_t new_size) {
 
 void wrapped_free(void* pointer) {
     if(pointer == NULL) { return; }
-    size_t real_size = malloc_usable_size(pointer);
+    #if LINUX_COMPILE
+        size_t real_size = malloc_usable_size(pointer);
+    #endif
+    #if MAC_COMPILE
+        size_t real_size = malloc_size(pointer);
+    #endif
     Global_State->MemoryFreed += real_size;
     //printf("(Mem) %lu B Deallocated\n", real_size);
     free(pointer); return;
