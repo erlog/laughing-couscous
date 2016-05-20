@@ -6,7 +6,7 @@ in vec3 surface_normal;
 in vec3 surface_tangent;
 in vec3 surface_bitangent;
 
-//Matrices
+uniform vec3 light_direction;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;

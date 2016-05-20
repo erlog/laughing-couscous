@@ -71,6 +71,7 @@ typedef struct c_object {
     Texture* specular_map;
     Shader* shader;
     Physics_Object* physics;
+    glm::vec3 light_direction;
 } Object;
 
 typedef struct c_camera {
@@ -91,6 +92,8 @@ typedef struct c_state {
     uint32_t LastFPSUpdateTime;
     Object* Objects;
     int ObjectCount;
+    Object* StaticObjects;
+    int StaticObjectCount;
     Scene_Camera* Camera;
 } State;
 

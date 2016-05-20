@@ -37,11 +37,9 @@ uint32_t current_time() {
 
 void update_physics_object(Physics_Object* object, float delta_time_s) {
     //rotate
-    #if 1
     object->quaternion = glm::rotate(object->quaternion,
         glm::radians(delta_time_s * object->angular_velocity),
         object->rotation_vector);
-    #endif
     //translate
     object->position += (delta_time_s *
         object->velocity * object->facing * object->quaternion);
@@ -105,11 +103,13 @@ int main() {
     }
 
     //Set up simple OpenGL environment for rendering
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glMatrixMode( GL_PROJECTION ); glLoadIdentity();
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
     //glDepthRange(1.0, -1.0); //change the handedness of the z axis
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -121,7 +121,7 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->physics->position = glm::vec3(0.f, 0.f, 3.f);
+    state->Camera->physics->position = glm::vec3(0.f, 1.4f, 3.f);
     state->Camera->physics->facing = glm::vec3(0.f, 0.f, -1.f);
 
     //Construct Camera Matrices
@@ -133,29 +133,40 @@ int main() {
 
     //Load Objects
     state->ObjectCount = 3;
-    state->Objects = (Object*)walloc(sizeof(Object)*3);
+    state->Objects = (Object*)walloc(sizeof(Object)*state->ObjectCount);
+
     load_object(&state->Objects[0], "cube", "blank", "blank_nm", "blank_spec",
         "flat");
-    state->Objects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
+    state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 0.f, 0.f);
+    state->Objects[0].light_direction = glm::vec3(0.f, 0.f, -1.f);
+
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat");
-    state->Objects[1].model->local_position = glm::vec3(0.f, -0.5f, 0.f);
+    state->Objects[1].model->local_position = glm::vec3(0.f, 0.5f, 0.f);
     state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
+    state->Objects[1].light_direction = glm::vec3(0.f, 0.f, -1.f);
+
     load_object(&state->Objects[2], "african_head", "african_head",
         "african_head_nm", "african_head_spec", "shader");
-    state->Objects[2].physics->position = glm::vec3(-1.5f, 0.f, 0.f);
+    state->Objects[2].physics->position = glm::vec3(-1.5f, 1.f, 0.f);
     state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
+    state->Objects[2].light_direction = glm::vec3(0.f, 0.f, -1.f);
+
+    state->StaticObjectCount = 1;
+    state->StaticObjects = (Object*)walloc(sizeof(Object)*state->StaticObjectCount);
+    load_object(&state->StaticObjects[0], "ground_plane",
+        "checkerboard", "checkerboard_nm", "checkerboard_spec", "shader");
+    state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
+    state->StaticObjects[0].light_direction = glm::vec3(0.f, -1.f, 0.f);
 
     Object* object;
-
-    state->StartTime = current_time();
-    state->LastFPSUpdateTime = state->StartTime;
-
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
-
+    state->StartTime = current_time();
+    state->LastFPSUpdateTime = state->StartTime;
+    int passed_frames = 0;
     while(state->IsRunning) {
         state->CurrentTime = current_time();
         state->DeltaTimeMS = state->CurrentTime - state->LastUpdateTime;
@@ -180,21 +191,24 @@ int main() {
         } }
 
         //TODO: is there a better way to control our framerate?
-        if( state->DeltaTimeMS > 32 ) {
+        if( state->DeltaTimeMS > 30 ) {
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //Update physics objects
+            //Update camera
             update_physics_object(state->Camera->physics, state->DeltaTimeS);
 
-            //draw objects
+            //draw static objects
+            for(int i = 0; i < state->StaticObjectCount; i++) {
+                gl_draw_object(state->Camera, &state->StaticObjects[i]);
+            }
+
+            //draw dynamic objects
             for(int i = 0; i < state->ObjectCount; i++) {
                 state->Objects[i].physics->angular_velocity = 30.f;
                 update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
-
-            gl_draw_debug_grid_lines();
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->CurrentTime;
@@ -206,13 +220,20 @@ int main() {
                 fps /= (state->CurrentTime - state->LastFPSUpdateTime);
 
                 message_log("FPS-", fps*1000);
+
+                fps = (float)passed_frames;
+                fps /= (state->CurrentTime - state->LastFPSUpdateTime);
+                message_log("Frames passed per second-", fps*1000);
+
                 message_log("Memory in use-", mem_info.MemoryAllocated -
                     mem_info.MemoryFreed);
 
+                passed_frames = 0;
                 state->FrameCounter = 0;
                 state->LastFPSUpdateTime = state->CurrentTime;
             }
         }
+        else { passed_frames++; }
 
     }
 

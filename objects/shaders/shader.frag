@@ -5,6 +5,8 @@ in vec3 local_tangent;
 in vec3 local_bitangent;
 in vec3 local_normal;
 in mat3 normal_matrix;
+uniform vec3 camera_direction;
+uniform vec3 light_direction;
 
 //Textures
 uniform sampler2D diffuse;
@@ -12,8 +14,6 @@ uniform sampler2D normal;
 uniform sampler2D specular;
 
 //Variables
-vec3 light_direction;
-vec3 camera_direction;
 vec3 mapped_normal;
 vec4 color;
 
@@ -39,18 +39,15 @@ void main() {
     normalize(mapped_normal);
 
     //compute diffuse intensity
-    light_direction = vec3(0.0, 0.0, 1.0);
-    float diffuse_intensity = clamp(dot(light_direction, mapped_normal), 0.0, 1.0);
+    float diffuse_intensity = clamp(dot(light_direction, mapped_normal)*-1.0, 0.0, 1.0);
 
     //compute specular intensity
-    camera_direction = normal_matrix * vec3(0.0, 0.0, 1.0);
-    float factor = dot(mapped_normal, light_direction)*2.0;
-    vec3 reflection_vector = (factor * mapped_normal) - light_direction;
+    vec3 reflection_vector = reflect(light_direction, mapped_normal);
     normalize(reflection_vector);
 
     color = texture(specular, texture_coordinate);
     float power = color.r*24.0;
-    float reflectivity = clamp(dot(camera_direction, reflection_vector), 0.0, 1.0);
+    float reflectivity = clamp(dot(camera_direction, reflection_vector)*-1.0, 0.0, 1.0);
     reflectivity = pow(reflectivity, power);
 
     float intensity = 0.05 + 0.45*reflectivity + 0.6*diffuse_intensity;

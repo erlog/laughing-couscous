@@ -2,6 +2,9 @@
 
 //Inputs
 in vec3 local_normal;
+uniform vec3 camera_direction;
+uniform vec3 light_direction;
+
 //Outputs
 out vec4 fragColor;
 
@@ -16,8 +19,8 @@ vec4 normal_to_color(vec3 normal) {
 
 void main() {
     //compute diffuse intensity
-    vec3 light_direction = vec3(0.0, 0.0, 1.0);
-    float diffuse_intensity = clamp(dot(light_direction, local_normal), 0.05, 1.0) * 1.15;
-    //fragColor = vec4(1.0, 0.0, 0.0, 1.0); //* diffuse_intensity;
-    fragColor = normal_to_color(local_normal);
+    float diffuse_intensity = clamp(dot(light_direction, local_normal)*-1.0, 0.25, 1.0) * 1.15;
+    //fragColor = vec4(1.0, 0.0, 0.0, 1.0); // * diffuse_intensity;
+    fragColor = normal_to_color(local_normal) * diffuse_intensity;
+    //fragColor = normal_to_color(light_direction);
 }

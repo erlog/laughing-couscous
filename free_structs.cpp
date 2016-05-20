@@ -33,6 +33,10 @@ void wfree_state(State* object) {
         wfree_object(&object->Objects[i]);
     }
     wfree(object->Objects);
+    for(int i = 0; i < object->StaticObjectCount; i++) {
+        wfree_object(&object->StaticObjects[i]);
+    }
+    wfree(object->StaticObjects);
     wfree_camera(object->Camera);
     wfree(object->Camera);
     return;

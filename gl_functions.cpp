@@ -13,6 +13,14 @@ void gl_bind_mat4(GLuint shader, glm::mat4 matrix, const char* variable) {
     return;
 }
 
+void gl_bind_vec3(GLuint shader, glm::vec3 vector, const char* variable) {
+    GLint loc = glGetUniformLocation(shader, variable);
+    if(loc != -1) {
+        glUniform3fv(loc, 1, glm::value_ptr(vector));
+    }
+    return;
+}
+
 void gl_register_texture(Texture* texture) {
     glGenTextures(1, &texture->id);
     glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -36,17 +44,37 @@ void gl_bind_texture(GLuint shader, Texture* texture, GLuint slot,
     return;
 }
 
+void gl_draw_debug_grid_lines() {
+    //TODO: convert this to a real VAO
+    glUseProgram(0);
+    glBegin(GL_LINES);
+    glColor3f(1.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(10.0, 0.0, 0.0);
+    glColor3f(0.0, 1.0, 0.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 10.0, 0.0);
+    glColor3f(0.0, 0.0, 1.0);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, -10.0);
+    glEnd();
+
+    glBegin(GL_POINTS);
+    glColor3f(1.0, 1.0, 1.0);
+    glVertex3f(1.0, 0.0, 0.0);
+    glVertex3f(0.0, 1.0, 0.0);
+    glVertex3f(0.0, 0.0, -1.0);
+    glEnd();
+}
+
 void gl_draw_object(Scene_Camera* camera, Object* object) {
     glUseProgram(object->shader->id);
     glBindVertexArray(object->model->vao);
 
     //Bind diffuse texture
-    gl_bind_texture(object->shader->id, object->texture, 0,
-        "diffuse");
-    gl_bind_texture(object->shader->id, object->normal_map, 1,
-        "normal");
-    gl_bind_texture(object->shader->id, object->specular_map, 2,
-        "specular");
+    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
+    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
+    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
 
     //Build model matrix
     glm::mat4 model_matrix;
@@ -62,6 +90,11 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     view_matrix *= glm::mat4_cast(camera->physics->quaternion);
     view_matrix = glm::translate(view_matrix, -1.f*camera->physics->position);
 
+
+    glm::vec3 camera_direction =
+        camera->physics->facing * camera->physics->quaternion;
+    gl_bind_vec3(object->shader->id, camera_direction, "camera_direction");
+    gl_bind_vec3(object->shader->id, object->light_direction, "light_direction");
     gl_bind_mat4(object->shader->id, model_matrix, "model");
     gl_bind_mat4(object->shader->id, view_matrix, "view");
     gl_bind_mat4(object->shader->id, camera->projection, "projection");
@@ -71,29 +104,6 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
 
     //Unbind VAO
     glBindVertexArray(0);
-}
-
-void gl_draw_debug_grid_lines() {
-    glUseProgram(0);
-
-    glBegin( GL_LINES);
-    glColor3f(1.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(1.0, 0.0, 0.0);
-    glColor3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 1.0, 0.0);
-    glColor3f(0.0, 0.0, 1.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, -1.0);
-    glEnd();
-
-    glBegin(GL_POINTS);
-    glColor3f(1.0, 1.0, 1.0);
-    glVertex3f(1.0, 0.0, 0.0);
-    glVertex3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 0.0, -1.0);
-    glEnd();
 }
 
 void gl_register_model(Model* model) {
