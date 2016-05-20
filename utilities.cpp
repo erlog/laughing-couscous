@@ -99,9 +99,12 @@ bool load_shader(const char* shader_name, Shader* shader) {
 void load_physics(Physics_Object* physics) {
     physics->position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
-    physics->deceleration_factor = 0.95f;
-    physics->rotation = glm::vec3(0.f, 0.f, 0.f);
-    physics->angular_velocity = glm::vec3(0.f, 0.f, 0.f);
+    physics->deceleration_factor = 26.5f;
+    physics->quaternion = glm::quat();
+    physics->facing = glm::vec3(0.f, 0.f, -1.f);
+    physics->angular_velocity = 0.f;
+    physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
+    physics->scale = glm::vec3(1.f, 1.f, 1.f);
 }
 
 bool load_object(Object* object, const char* model_name,
@@ -136,8 +139,7 @@ bool load_object(Object* object, const char* model_name,
 
     object->model->local_position = glm::vec3(0.f, 0.f, 0.f);
     object->model->local_scale = glm::vec3(1.f, 1.f, 1.f);
-    object->model->local_rotation_angle = 0.f;
-    object->model->local_rotation = glm::vec3(1.f, 0.f, 0.f);
+    object->model->local_quaternion = glm::quat();
     gl_register_model(object->model);
 
     //Physics

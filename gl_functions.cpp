@@ -48,27 +48,23 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     gl_bind_texture(object->shader->id, object->specular_map, 2,
         "specular");
 
-    //Bind matrices
+    //Build model matrix
     glm::mat4 model_matrix;
-    model_matrix = glm::translate(model_matrix,
-        object->physics->position + object->model->local_position);
-    model_matrix = glm::rotate(model_matrix,
-        glm::radians(object->model->local_rotation_angle),
-        object->model->local_rotation);
-    model_matrix = glm::rotate(model_matrix,
-        glm::radians(object->physics->rotation_angle),
-        object->physics->rotation);
+    model_matrix = glm::translate(model_matrix, object->physics->position);
+    model_matrix = glm::translate(model_matrix, object->model->local_position);
+    model_matrix *= glm::mat4_cast(object->physics->quaternion);
+    model_matrix *= glm::mat4_cast(object->model->local_quaternion);
+    model_matrix = glm::scale(model_matrix, object->physics->scale);
     model_matrix = glm::scale(model_matrix, object->model->local_scale);
-    gl_bind_mat4(object->shader->id, model_matrix, "model");
 
+    //Build view matrix
     glm::mat4 view_matrix;
-    view_matrix = glm::lookAt(camera->physics->position,
-        camera->physics->position + camera->physics->rotation,
-        glm::vec3(0.f, 1.f, 0.f));
+    view_matrix *= glm::mat4_cast(camera->physics->quaternion);
+    view_matrix = glm::translate(view_matrix, -1.f*camera->physics->position);
 
+    gl_bind_mat4(object->shader->id, model_matrix, "model");
     gl_bind_mat4(object->shader->id, view_matrix, "view");
-    gl_bind_mat4(object->shader->id, camera->projection,
-        "projection");
+    gl_bind_mat4(object->shader->id, camera->projection, "projection");
 
     //Render VAO
     glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);

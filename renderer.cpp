@@ -11,8 +11,8 @@
 #include <GL/glext.h>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <SDL.h>
 #include <SDL_opengl.h>
 //#include <SDL_opengl_glext.h>
@@ -36,8 +36,18 @@ uint32_t current_time() {
 }
 
 void update_physics_object(Physics_Object* object, float delta_time_s) {
-    object->position += (delta_time_s * object->velocity * object->rotation);
+    //rotate
+    #if 1
+    object->quaternion = glm::rotate(object->quaternion,
+        glm::radians(delta_time_s * object->angular_velocity),
+        object->rotation_vector);
+    #endif
+    //translate
+    object->position += (delta_time_s *
+        object->velocity * object->facing * object->quaternion);
+    //decelerate
     object->velocity *= (delta_time_s * object->deceleration_factor);
+    object->angular_velocity *= (delta_time_s * object->deceleration_factor);
     return;
 }
 
@@ -83,6 +93,8 @@ int main() {
         SDL_GL_SetSwapInterval(-1); //late-swap tearing if the vsync call fails
     }
 
+    const uint8_t* SDL_KeyState = SDL_GetKeyboardState(NULL);
+
     //GLEW
     glewExperimental = GL_TRUE;
     if(glewInit() != GLEW_OK) {
@@ -95,9 +107,9 @@ int main() {
     //Set up simple OpenGL environment for rendering
     glMatrixMode( GL_PROJECTION ); glLoadIdentity();
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
-    glClearColor( 0.f, 0.f, 0.f, 1.f );
+    glClearColor( 0.f, 0.f, 0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
     //glDepthRange(1.0, -1.0); //change the handedness of the z axis
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -108,14 +120,13 @@ int main() {
     //Construct Camera
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
+    load_physics(state->Camera->physics);
     state->Camera->physics->position = glm::vec3(0.f, 0.f, 3.f);
-    state->Camera->physics->rotation = glm::vec3(0.f, 0.f, -1.f);
-    state->Camera->physics->deceleration_factor = 26.5f;
-    state->Camera->physics->velocity = 0.f;
+    state->Camera->physics->facing = glm::vec3(0.f, 0.f, -1.f);
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
-    projection_matrix = glm::perspective(glm::radians(85.f),
+    projection_matrix = glm::perspective(glm::radians(45.f),
         (float)state->Screen->width/state->Screen->height, 0.1f, 100.f);
     state->Camera->projection = projection_matrix;
 
@@ -126,16 +137,16 @@ int main() {
     load_object(&state->Objects[0], "cube", "blank", "blank_nm", "blank_spec",
         "flat");
     state->Objects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
-    state->Objects[0].physics->rotation = glm::vec3(1.f, 0.f, 0.f);
+    state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 0.f, 0.f);
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat");
     state->Objects[1].model->local_position = glm::vec3(0.f, -0.5f, 0.f);
     state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
-    state->Objects[1].physics->rotation = glm::vec3(0.f, 1.f, 0.f);
+    state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     load_object(&state->Objects[2], "african_head", "african_head",
         "african_head_nm", "african_head_spec", "shader");
     state->Objects[2].physics->position = glm::vec3(-1.5f, 0.f, 0.f);
-    state->Objects[2].physics->rotation = glm::vec3(0.f, 0.f, 1.f);
+    state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
 
     Object* object;
 
@@ -150,6 +161,11 @@ int main() {
         state->DeltaTimeMS = state->CurrentTime - state->LastUpdateTime;
         state->DeltaTimeS = state->DeltaTimeMS / 1000.f;
 
+        //Process keyboard state
+        SDL_PumpEvents();
+        process_keyboard(state, SDL_KeyState);
+
+        //Process keydown events
         while(SDL_PollEvent(&event)) { switch(event.type) {
             case SDL_WINDOWEVENT:
                 break;
@@ -173,8 +189,8 @@ int main() {
 
             //draw objects
             for(int i = 0; i < state->ObjectCount; i++) {
-                state->Objects[i].physics->rotation_angle +=
-                    (state->DeltaTimeS * 60.f);
+                state->Objects[i].physics->angular_velocity = 30.f;
+                update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
 

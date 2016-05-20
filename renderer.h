@@ -41,8 +41,7 @@ typedef struct c_model {
     Face* faces;
     glm::vec3 local_position; //local position offset
     glm::vec3 local_scale; //local scale of the model
-    GLfloat local_rotation_angle;
-    glm::vec3 local_rotation; //local rotation of the model
+    glm::quat local_quaternion; //local orientation of the model
     GLuint vbo; //index of the Vertex Buffer object in OpenGL
     GLuint vao; //index of the Vertex Array object in OpenGL
 } Model;
@@ -57,10 +56,11 @@ typedef struct c_physics_object {
     glm::vec3 position; //where in world-space something is in meters
     GLfloat velocity;   //how fast something is moving in meters/sec
     GLfloat deceleration_factor;
-    glm::vec3 orientation;  //which direction something is facing
-    //TODO: move from Euler angles to quaternions
-    GLfloat rotation_angle; //how far something is facing in that direction
-    glm::vec3 angular_velocity; //how much in degrees/sec rotation changes over time
+    glm::quat quaternion; //orientation
+    glm::vec3 facing; //which way is "forward" for this object
+    GLfloat angular_velocity;   //how fast something is rotating in deg/sec
+    glm::vec3 rotation_vector;   //the axis of rotation
+    glm::vec3 scale; //world scale of the object
 } Physics_Object;
 
 typedef struct c_object {
@@ -101,7 +101,7 @@ typedef struct c_memory {
 
 //Globals
 const char* AssetFolderPath = "objects";
-const char* OutputFolderPath = "output";
+const char* OutputFolderPath = "new_output";
 
 //Generic utility functions
 //TODO: re-arrange source to not require any functions here

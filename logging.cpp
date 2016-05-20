@@ -3,7 +3,7 @@ void message_log(const char* message, const char* predicate) {
     printf("%i: %s %s\n", SDL_GetTicks(), message, predicate);
 }
 
-//Vectors
+//Vectors, etc.
 void message_log(const char* message, glm::vec3 vec) {
     printf("%i: %s (%f, %f, %f)\n",
         SDL_GetTicks(), message, vec.x, vec.y, vec.z);
@@ -12,6 +12,23 @@ void message_log(const char* message, glm::vec3 vec) {
 void message_log(const char* message, glm::vec4 vec) {
     printf("%i: %s (%f, %f, %f, %f)\n",
         SDL_GetTicks(), message, vec.x, vec.y, vec.z, vec.w);
+}
+
+void message_log(const char* message, glm::quat vec) {
+    printf("%i: %s (%f, %f, %f, %f)\n",
+        SDL_GetTicks(), message, vec.x, vec.y, vec.z, vec.w);
+}
+
+void message_log(const char* message, glm::mat4 mat) {
+    printf("%s\n", message);
+    message_log("   ", mat[0]); message_log("   ", mat[1]);
+    message_log("   ", mat[2]); message_log("   ", mat[3]); puts("---");
+}
+
+void message_log(const char* message, glm::mat3 mat) {
+    printf("%s\n", message);
+    message_log("   ", mat[0]); message_log("   ", mat[1]);
+    message_log("   ", mat[2]); puts("---");
 }
 
 //Numbers
