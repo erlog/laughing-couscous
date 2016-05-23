@@ -3,6 +3,10 @@ void clamp(GLfloat* number, GLfloat min, GLfloat max) {
     if(*number > max) { *number = max; return; }
     if(*number < max) { *number = min; return; }
 }
+void clamp(int* number, int min, int max) {
+    if(*number > max) { *number = max; return; }
+    if(*number < max) { *number = min; return; }
+}
 
 char* str_lit(const char* string) {
     int length = strlen(string) + 1;
@@ -101,9 +105,9 @@ void load_physics(Physics_Object* physics) {
     physics->velocity = 0.f;
     physics->deceleration_factor = 26.5f;
     physics->quaternion = glm::quat();
-    physics->facing = glm::vec3(0.f, 0.f, -1.f);
     physics->angular_velocity = 0.f;
-    physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
+    physics->rotation_vector = glm::vec3(0.f, 0.f, 0.f);
+    physics->movement_vector = glm::vec3(0.f, 0.f, 0.f);
     physics->scale = glm::vec3(1.f, 1.f, 1.f);
 }
 

@@ -86,13 +86,18 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     model_matrix = glm::scale(model_matrix, object->model->local_scale);
 
     //Build view matrix
-    glm::mat4 view_matrix;
-    view_matrix *= glm::mat4_cast(camera->physics->quaternion);
-    view_matrix = glm::translate(view_matrix, -1.f*camera->physics->position);
-
-
+    //We're using quaternions for the camera which will lead
+    //to the camera rolling around the Z axis. To get around this we choose
+    //a point in front of the camera, rotate that point using a quaternion, and
+    //then use the GLM function LookAt to generate a camera orientation in the
+    //coordinate space we generally consider to be upright and facing forward
     glm::vec3 camera_direction =
-        camera->physics->facing * camera->physics->quaternion;
+        glm::vec3(0.f, 0.f, -1.f) * camera->physics->quaternion;
+    normalize(&camera_direction);
+    glm::mat4 view_matrix = glm::lookAt(camera->physics->position,
+        camera_direction + camera->physics->position, glm::vec3(0.f, 1.f, 0.f));
+    camera->physics->quaternion = glm::quat_cast(view_matrix);
+
     gl_bind_vec3(object->shader->id, camera_direction, "camera_direction");
     gl_bind_vec3(object->shader->id, object->light_direction, "light_direction");
     gl_bind_mat4(object->shader->id, model_matrix, "model");

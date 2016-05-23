@@ -57,9 +57,9 @@ typedef struct c_physics_object {
     GLfloat velocity;   //how fast something is moving in meters/sec
     GLfloat deceleration_factor;
     glm::quat quaternion; //orientation
-    glm::vec3 facing; //which way is "forward" for this object
     GLfloat angular_velocity;   //how fast something is rotating in deg/sec
     glm::vec3 rotation_vector;   //the axis of rotation
+    glm::vec3 movement_vector;  //the axis of movement
     glm::vec3 scale; //world scale of the object
 } Physics_Object;
 
@@ -112,11 +112,17 @@ char* construct_asset_path(const char* folder, const char* filename,
         const char* file_extension);
 
 //Debug Functions
+#if MAC_COMPILE
+    #include <malloc/malloc.h>
+#endif
+#if LINUX_COMPILE
+    #include <malloc.h>
+#endif
 Memory_Info* Global_State; //use this only for debug
 void* wrapped_alloc(size_t size) {
     void* pointer = malloc(size);
     #if LINUX_COMPILE
-        size_t real_size = malloc_size(pointer);
+        size_t real_size = malloc_usable_size(pointer);
     #endif
     #if MAC_COMPILE
         size_t real_size = malloc_size(pointer);

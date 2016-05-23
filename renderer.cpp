@@ -1,17 +1,11 @@
-#define MAC_COMPILE 1
-#define LINUX_COMPILE 0
+#define MAC_COMPILE 0
+#define LINUX_COMPILE 1
 
 //C Standard Library
 #include <time.h>
 #include <float.h>
 #include <math.h>
 #include <stdarg.h>
-#if MAC_COMPILE
-    #include <malloc/malloc.h>
-#endif
-#if LINUX_COMPILE
-    #include <malloc.h>
-#endif
 //C++ Stuff
 
 //Other Libraries
@@ -23,6 +17,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #if MAC_COMPILE
@@ -49,15 +44,23 @@ uint32_t current_time() {
 
 void update_physics_object(Physics_Object* object, float delta_time_s) {
     //rotate
-    object->quaternion = glm::rotate(object->quaternion,
-        glm::radians(delta_time_s * object->angular_velocity),
-        object->rotation_vector);
+    if(object->angular_velocity > 0) {
+        normalize(&object->rotation_vector);
+        float amount = glm::radians(delta_time_s * object->angular_velocity);
+        object->quaternion = glm::rotate(object->quaternion, amount, object->rotation_vector);
+        object->angular_velocity *= (delta_time_s * object->deceleration_factor);
+    }
     //translate
-    object->position += (delta_time_s *
-        object->velocity * object->facing * object->quaternion);
-    //decelerate
-    object->velocity *= (delta_time_s * object->deceleration_factor);
-    object->angular_velocity *= (delta_time_s * object->deceleration_factor);
+    if(object->velocity > 0) {
+        normalize(&object->movement_vector);
+        glm::vec3 new_position = delta_time_s * object->velocity *
+            object->movement_vector * object->quaternion;
+        new_position.y = 0;
+        object->position += new_position;
+        //decelerate
+        object->velocity *= (delta_time_s * object->deceleration_factor);
+    }
+
     return;
 }
 
@@ -103,6 +106,7 @@ int main() {
         SDL_GL_SetSwapInterval(-1); //late-swap tearing if the vsync call fails
     }
 
+    SDL_SetRelativeMouseMode(SDL_TRUE);
     const uint8_t* SDL_KeyState = SDL_GetKeyboardState(NULL);
 
     //GLEW
@@ -134,7 +138,6 @@ int main() {
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
     state->Camera->physics->position = glm::vec3(0.f, 1.4f, 3.f);
-    state->Camera->physics->facing = glm::vec3(0.f, 0.f, -1.f);
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -150,7 +153,7 @@ int main() {
     load_object(&state->Objects[0], "cube", "blank", "blank_nm", "blank_spec",
         "flat");
     state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
-    state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 0.f, 0.f);
+    state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
     state->Objects[0].light_direction = glm::vec3(0.f, 0.f, -1.f);
 
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
@@ -192,11 +195,11 @@ int main() {
         while(SDL_PollEvent(&event)) { switch(event.type) {
             case SDL_WINDOWEVENT:
                 break;
-
+            case SDL_MOUSEMOTION:
+                break;
             case SDL_KEYDOWN:
                 handle_keyboard(state, event.key);
                 break;
-
             case SDL_QUIT:
                 state->IsRunning = false;
                 break;
@@ -204,6 +207,8 @@ int main() {
 
         //TODO: is there a better way to control our framerate?
         if( state->DeltaTimeMS > 30 ) {
+            process_mouse(state);
+
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
