@@ -39,6 +39,8 @@ typedef struct c_model {
     char* asset_path;
     int face_count;
     Face* faces;
+    glm::vec3 bounding_minimum;
+    glm::vec3 bounding_maximum;
     glm::vec3 local_position; //local position offset
     glm::vec3 local_scale; //local scale of the model
     glm::quat local_quaternion; //local orientation of the model

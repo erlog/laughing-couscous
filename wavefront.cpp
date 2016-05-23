@@ -151,6 +151,34 @@ bool load_model(const char* model_name, Model* model) {
 
     fclose(file);
 
+    //Compute bounding box
+    glm::vec3 bounding_minimum = vertices[0];
+    glm::vec3 bounding_maximum = vertices[1];
+    for(int i = 0; i < vertex_count; i++) {
+        //minimums
+        if(vertices[i].x < bounding_minimum.x) {
+            bounding_minimum.x = vertices[i].x;
+        }
+        if(vertices[i].y < bounding_minimum.y) {
+            bounding_minimum.y = vertices[i].y;
+        }
+        if(vertices[i].z < bounding_minimum.z) {
+            bounding_minimum.z = vertices[i].z;
+        }
+        //maximums
+        if(vertices[i].x > bounding_maximum.x) {
+            bounding_maximum.x = vertices[i].x;
+        }
+        if(vertices[i].y > bounding_maximum.y) {
+            bounding_maximum.y = vertices[i].y;
+        }
+        if(vertices[i].z > bounding_maximum.z) {
+            bounding_maximum.z = vertices[i].z;
+        }
+    }
+    model->bounding_minimum = bounding_minimum;
+    model->bounding_maximum = bounding_maximum;
+
     //Assemble Faces
     Face* faces = (Face*)walloc(sizeof(Face)*face_count);
     Indexed_Face indexed_face;
