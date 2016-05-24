@@ -37,8 +37,9 @@ typedef struct c_face {
 
 typedef struct c_model {
     char* asset_path;
-    int face_count;
+    GLuint face_count;
     Face* faces;
+    glm::vec4 color;
     glm::vec3 bounding_minimum;
     glm::vec3 bounding_maximum;
     glm::vec3 local_position; //local position offset

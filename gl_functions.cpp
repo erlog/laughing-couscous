@@ -21,6 +21,14 @@ void gl_bind_vec3(GLuint shader, glm::vec3 vector, const char* variable) {
     return;
 }
 
+void gl_bind_vec4(GLuint shader, glm::vec4 vector, const char* variable) {
+    GLint loc = glGetUniformLocation(shader, variable);
+    if(loc != -1) {
+        glUniform4fv(loc, 1, glm::value_ptr(vector));
+    }
+    return;
+}
+
 void gl_register_texture(Texture* texture) {
     glGenTextures(1, &texture->id);
     glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -98,6 +106,7 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
         camera_direction + camera->physics->position, glm::vec3(0.f, 1.f, 0.f));
     camera->physics->quaternion = glm::quat_cast(view_matrix);
 
+    gl_bind_vec4(object->shader->id, object->model->color, "matte_color");
     gl_bind_vec3(object->shader->id, camera_direction, "camera_direction");
     gl_bind_vec3(object->shader->id, object->light_direction, "light_direction");
     gl_bind_mat4(object->shader->id, model_matrix, "model");

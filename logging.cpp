@@ -36,6 +36,10 @@ void message_log(const char* message, float number) {
     printf("%i: %s %f\n", SDL_GetTicks(), message, number);
 }
 
+void message_log(const char* message, unsigned int number) {
+    printf("%i: %s %u\n", SDL_GetTicks(), message, number);
+}
+
 void message_log(const char* message, int number) {
     printf("%i: %s %i\n", SDL_GetTicks(), message, number);
 }

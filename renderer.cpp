@@ -18,6 +18,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #if MAC_COMPILE
@@ -33,7 +36,7 @@ using namespace std;
 #include "free_structs.cpp"
 #include "logging.cpp"
 #include "gl_functions.cpp"
-#include "wavefront.cpp"
+#include "model_loader.cpp"
 #include "utilities.cpp"
 #include "hid_input.cpp"
 //#include "ruby_functions.cpp"
@@ -175,6 +178,7 @@ int main() {
         "checkerboard", "checkerboard_nm", "checkerboard_spec", "shader");
     state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
     state->StaticObjects[0].light_direction = glm::vec3(0.f, -1.f, 0.f);
+    state->StaticObjects[0].model->color = glm::vec4(0.5f, 0.5f, 0.5f, 1.f);
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary

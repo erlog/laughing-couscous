@@ -141,6 +141,7 @@ bool load_object(Object* object, const char* model_name,
         return false;
     }
 
+    object->model->color = glm::vec4(1.f, 1.f, 1.f, 1.f);
     object->model->local_position = glm::vec3(0.f, 0.f, 0.f);
     object->model->local_scale = glm::vec3(1.f, 1.f, 1.f);
     object->model->local_quaternion = glm::quat();
