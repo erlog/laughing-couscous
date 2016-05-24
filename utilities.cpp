@@ -8,6 +8,10 @@ void clamp(int* number, int min, int max) {
     if(*number < max) { *number = min; return; }
 }
 
+glm::vec4 rgb_to_vector(uint8_t r, uint8_t g, uint8_t b) {
+    return glm::vec4(r/255.f, g/255.f, b/255.f, 1.f);
+}
+
 char* str_lit(const char* string) {
     int length = strlen(string) + 1;
     char* result = (char *)walloc(sizeof(char)*length);

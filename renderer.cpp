@@ -126,7 +126,9 @@ int main() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glMatrixMode( GL_PROJECTION ); glLoadIdentity();
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
-    glClearColor( 0.f, 0.f, 0.f, 0.f );
+    glClearColor( 0.f, 0.f, 0.f, 1.f );
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
@@ -150,6 +152,9 @@ int main() {
 
 
     //Load Objects
+    glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
+    normalize(&light_direction);
+
     state->ObjectCount = 3;
     state->Objects = (Object*)walloc(sizeof(Object)*state->ObjectCount);
 
@@ -157,28 +162,32 @@ int main() {
         "flat");
     state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
-    state->Objects[0].light_direction = glm::vec3(0.f, 0.f, -1.f);
+    state->Objects[0].light_direction = light_direction;
+    state->Objects[0].model->local_scale = glm::vec3(0.5f, 0.5f, 0.5f);
+    state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat");
     state->Objects[1].model->local_position = glm::vec3(0.f, 0.5f, 0.f);
     state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
-    state->Objects[1].light_direction = glm::vec3(0.f, 0.f, -1.f);
+    state->Objects[1].light_direction = light_direction;
+    state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
 
-    load_object(&state->Objects[2], "african_head", "african_head",
-        "african_head_nm", "african_head_spec", "shader");
+    load_object(&state->Objects[2], "cone", "blank", "blank_nm",
+        "blank_spec", "flat");
     state->Objects[2].physics->position = glm::vec3(-1.5f, 1.f, 0.f);
     state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
-    state->Objects[2].light_direction = glm::vec3(0.f, 0.f, -1.f);
+    state->Objects[2].light_direction = light_direction;
+    state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
 
     state->StaticObjectCount = 1;
     state->StaticObjects = (Object*)walloc(sizeof(Object)*state->StaticObjectCount);
     load_object(&state->StaticObjects[0], "ground_plane",
-        "checkerboard", "checkerboard_nm", "checkerboard_spec", "shader");
+        "checkerboard", "checkerboard_nm", "checkerboard_spec", "flat");
     state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
-    state->StaticObjects[0].light_direction = glm::vec3(0.f, -1.f, 0.f);
-    state->StaticObjects[0].model->color = glm::vec4(0.5f, 0.5f, 0.5f, 1.f);
+    state->StaticObjects[0].light_direction = light_direction;
+    state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary

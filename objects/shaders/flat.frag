@@ -20,8 +20,9 @@ vec4 normal_to_color(vec3 normal) {
 
 void main() {
     //compute diffuse intensity
-    float diffuse_intensity = clamp(dot(light_direction, local_normal)*-1.0, 0.25, 1.0) * 1.15;
-    //fragColor = vec4(1.0, 0.0, 0.0, 1.0); // * diffuse_intensity;
-    fragColor = matte_color * diffuse_intensity;
+    float diffuse_intensity = clamp(dot(light_direction, local_normal)*-1.0, 0.0, 1.0);
+    vec4 color = matte_color * diffuse_intensity;
+    color.a = 1;
+    fragColor = color;
     //fragColor = normal_to_color(local_normal);
 }
