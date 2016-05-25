@@ -23,6 +23,8 @@ void process_mouse(State* state) {
     int x=0; int y=0;
     uint32_t bitmask = SDL_GetRelativeMouseState(&x, &y);
 
+    if( (x == 0) & (y == 0) ) { return; }
+
     Physics_Object* physics = state->Camera->physics;
 
     glm::quat rotation_x = glm::quat(
@@ -36,6 +38,12 @@ void handle_keyboard(State* state, SDL_KeyboardEvent key) {
     switch(key.keysym.sym) {
         case SDLK_ESCAPE:
             state->IsRunning = false;
+            break;
+        case SDLK_p:
+            toggle_pause(state);
+            break;
+        case SDLK_F11:
+            reload_shaders(state);
             break;
         case SDLK_F12:
             take_screenshot(state);

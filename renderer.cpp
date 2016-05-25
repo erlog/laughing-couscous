@@ -41,10 +41,6 @@ using namespace std;
 #include "hid_input.cpp"
 //#include "ruby_functions.cpp"
 
-uint32_t current_time() {
-    return SDL_GetTicks();
-}
-
 void update_physics_object(Physics_Object* object, float delta_time_s) {
     //rotate
     if(object->angular_velocity > 0) {
@@ -72,6 +68,7 @@ int main() {
     Memory_Info mem_info = {0}; Global_State = &mem_info;
     State* state = (State*)walloc(sizeof(State));
     state->IsRunning = true;
+    state->IsPaused = true; //Pause will be toggled when our window gains focus
 
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
@@ -101,6 +98,7 @@ int main() {
     if(window == NULL) {
         message_log("Couldn't initialize-", "SDL OpenGL window"); return 0;
     }
+    state->Window = window;
     SDL_GLContext context = SDL_GL_CreateContext( window );
     if(context == NULL) {
         message_log("Couldn't get-", "OpenGL Context for window"); return 0;
@@ -109,7 +107,6 @@ int main() {
         SDL_GL_SetSwapInterval(-1); //late-swap tearing if the vsync call fails
     }
 
-    SDL_SetRelativeMouseMode(SDL_TRUE);
     const uint8_t* SDL_KeyState = SDL_GetKeyboardState(NULL);
 
     //GLEW
@@ -158,8 +155,8 @@ int main() {
     state->ObjectCount = 3;
     state->Objects = (Object*)walloc(sizeof(Object)*state->ObjectCount);
 
-    load_object(&state->Objects[0], "cube", "blank", "blank_nm", "blank_spec",
-        "flat");
+    load_object(&state->Objects[0], "cube", "dice", "dice", "dice",
+        "shader");
     state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
     state->Objects[0].light_direction = light_direction;
@@ -192,23 +189,23 @@ int main() {
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
-    state->StartTime = current_time();
-    state->LastFPSUpdateTime = state->StartTime;
+
+    update_time(state);
+    state->TimeDifference = SDL_GetTicks();
+    state->DeltaTimeMS = 33;
+    state->DeltaTimeS = 33/1000.0f;
+
     int passed_frames = 0;
     while(state->IsRunning) {
-        state->CurrentTime = current_time();
-        state->DeltaTimeMS = state->CurrentTime - state->LastUpdateTime;
-        state->DeltaTimeS = state->DeltaTimeMS / 1000.f;
-
-        //Process keyboard state
-        SDL_PumpEvents();
-        process_keyboard(state, SDL_KeyState);
+        update_time(state);
 
         //Process keydown events
         while(SDL_PollEvent(&event)) { switch(event.type) {
             case SDL_WINDOWEVENT:
-                break;
-            case SDL_MOUSEMOTION:
+                if(event.window.event == SDL_WINDOWEVENT_SHOWN) {
+                    SDL_SetRelativeMouseMode(SDL_TRUE);
+                    toggle_pause(state);
+                }
                 break;
             case SDL_KEYDOWN:
                 handle_keyboard(state, event.key);
@@ -218,6 +215,9 @@ int main() {
                 break;
         } }
 
+        if(state->IsPaused) { continue; }
+
+        process_keyboard(state, SDL_KeyState);
         //TODO: is there a better way to control our framerate?
         if( state->DeltaTimeMS > 30 ) {
             process_mouse(state);
@@ -241,18 +241,18 @@ int main() {
             }
 
             SDL_GL_SwapWindow(window);
-            state->LastUpdateTime = state->CurrentTime;
+            state->LastUpdateTime = state->GameTime;
             state->FrameCounter += 1;
 
             //Spit out debug info
             if(state->FrameCounter > 100) {
                 float fps = (float)state->FrameCounter;
-                fps /= (state->CurrentTime - state->LastFPSUpdateTime);
+                fps /= (state->WallTime - state->LastFPSUpdateTime);
 
                 message_log("FPS-", fps*1000);
 
                 fps = (float)passed_frames;
-                fps /= (state->CurrentTime - state->LastFPSUpdateTime);
+                fps /= (state->WallTime - state->LastFPSUpdateTime);
                 message_log("Frames passed per second-", fps*1000);
 
                 message_log("Memory in use-", mem_info.MemoryAllocated -
@@ -260,7 +260,7 @@ int main() {
 
                 passed_frames = 0;
                 state->FrameCounter = 0;
-                state->LastFPSUpdateTime = state->CurrentTime;
+                state->LastFPSUpdateTime = state->WallTime;
             }
         }
         else { passed_frames++; }

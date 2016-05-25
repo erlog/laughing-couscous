@@ -77,30 +77,41 @@ bool load_texture(const char* filename, Texture* texture) {
     return true;
 }
 
-bool load_shader(const char* shader_name, Shader* shader) {
-    shader->asset_path_vert = construct_asset_path("shaders", shader_name, "vert");
-    shader->asset_path_frag = construct_asset_path("shaders", shader_name, "frag");
+bool load_shaders(Object* object) {
+    char* asset_path_vert =
+        construct_asset_path("shaders", object->shader->name, "vert");
+    char* asset_path_frag =
+        construct_asset_path("shaders", object->shader->name, "frag");
 
-    shader->id = glCreateProgram();
-    GLint program_id = shader->id; GLuint shader_id;
+    GLint program_id = glCreateProgram();
+    GLuint shader_id;
 
-    if(!gl_load_shader(shader->asset_path_vert, &shader_id, GL_VERTEX_SHADER)) {
-        message_log("Error loading vertex shader-", shader->asset_path_vert);
+    if(!gl_load_shader(asset_path_vert, &shader_id, GL_VERTEX_SHADER)) {
+        message_log("Error loading vertex shader-", asset_path_vert);
         return false;
     }
     glAttachShader(program_id, shader_id);
-    if(!gl_load_shader(shader->asset_path_frag, &shader_id, GL_FRAGMENT_SHADER)) {
-        message_log("Error loading fragment shader-", shader->asset_path_frag);
+    if(!gl_load_shader(asset_path_frag, &shader_id, GL_FRAGMENT_SHADER)) {
+        message_log("Error loading fragment shader-", asset_path_frag);
         return false;
     }
-    glAttachShader(program_id, shader_id);
-    glBindAttribLocation(shader->id, 0, "local_position");
-    glBindAttribLocation(shader->id, 1, "texture_coord");
-    glBindAttribLocation(shader->id, 2, "surface_normal");
-    glBindAttribLocation(shader->id, 3, "surface_tangent");
-    glBindAttribLocation(shader->id, 4, "surface_bitangent");
-    glLinkProgram(shader->id);
 
+    object->shader->id = program_id;
+    glAttachShader(program_id, shader_id);
+    glBindAttribLocation(object->shader->id, 0, "local_position");
+    glBindAttribLocation(object->shader->id, 1, "texture_coord");
+    glBindAttribLocation(object->shader->id, 2, "surface_normal");
+    glBindAttribLocation(object->shader->id, 3, "surface_tangent");
+    glBindAttribLocation(object->shader->id, 4, "surface_bitangent");
+    glLinkProgram(object->shader->id);
+
+    //Bind textures
+    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
+    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
+    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
+
+    wfree(asset_path_vert);
+    wfree(asset_path_frag);
     return true;
 }
 
@@ -149,7 +160,6 @@ bool load_object(Object* object, const char* model_name,
     object->model->local_position = glm::vec3(0.f, 0.f, 0.f);
     object->model->local_scale = glm::vec3(1.f, 1.f, 1.f);
     object->model->local_quaternion = glm::quat();
-    gl_register_model(object->model);
 
     //Physics
     object->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
@@ -157,8 +167,16 @@ bool load_object(Object* object, const char* model_name,
 
     //Shaders
     object->shader = (Shader*)walloc(sizeof(Shader));
-    load_shader(shader_name, object->shader);
+    object->shader->name = str_lit(shader_name);
+    load_shaders(object);
 
+    //Bind textures
+    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
+    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
+    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
+
+    //Make OpenGL VBO and VAO
+    gl_register_object(object);
     return true;
 }
 
@@ -180,4 +198,41 @@ void take_screenshot(State* state) {
 
     wfree(datetime_string);
     wfree(output_path);
+}
+
+void reload_shaders(State* state) {
+    message_log("Reloading shaders");
+    for(int i = 0; i < state->StaticObjectCount; i++) {
+        load_shaders(&state->StaticObjects[i]);
+    }
+
+    for(int i = 0; i < state->ObjectCount; i++) {
+        load_shaders(&state->Objects[i]);
+    }
+}
+
+void update_time(State* state) {
+    state->WallTime = SDL_GetTicks();
+    state->GameTime = state->WallTime - state->TimeDifference;
+    state->DeltaTimeMS = state->GameTime - state->LastUpdateTime;
+    state->DeltaTimeS = state->DeltaTimeMS / 1000.f;
+    return;
+}
+
+void toggle_pause(State* state) {
+    if(state->IsPaused) {
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+        SDL_GetRelativeMouseState(NULL, NULL); //to fix the jumping problem
+        state->IsPaused = false;
+        state->TimeDifference = state->WallTime - state->PauseStartTime;
+        update_time(state);
+        message_log("Unpaused-", state->GameTime);
+    } else {
+        message_log("Pausing-", state->WallTime);
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        state->IsPaused = true;
+        state->PauseStartTime = state->GameTime;
+        message_log("Paused-", state->GameTime);
+    }
+    return;
 }

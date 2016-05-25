@@ -1,4 +1,7 @@
 //Strings
+void message_log(const char* message) {
+    printf("%i: %s\n", SDL_GetTicks(), message);
+}
 void message_log(const char* message, const char* predicate) {
     printf("%i: %s %s\n", SDL_GetTicks(), message, predicate);
 }

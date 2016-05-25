@@ -45,13 +45,10 @@ typedef struct c_model {
     glm::vec3 local_position; //local position offset
     glm::vec3 local_scale; //local scale of the model
     glm::quat local_quaternion; //local orientation of the model
-    GLuint vbo; //index of the Vertex Buffer object in OpenGL
-    GLuint vao; //index of the Vertex Array object in OpenGL
 } Model;
 
 typedef struct shader {
-    char* asset_path_vert;
-    char* asset_path_frag;
+    char* name;
     GLuint id; //ID assigned to the shader program by OpenGL
 } Shader;
 
@@ -67,7 +64,6 @@ typedef struct c_physics_object {
 } Physics_Object;
 
 typedef struct c_object {
-    //TODO: write code to free an object from memory
     Model* model;
     Texture* texture;
     Texture* normal_map;
@@ -75,6 +71,8 @@ typedef struct c_object {
     Shader* shader;
     Physics_Object* physics;
     glm::vec3 light_direction;
+    GLuint vbo; //index of the Vertex Buffer object in OpenGL
+    GLuint vao; //index of the Vertex Array object in OpenGL
 } Object;
 
 typedef struct c_camera {
@@ -86,11 +84,14 @@ typedef struct c_state {
     bool IsRunning;
     bool IsPaused;
     Texture* Screen;
-    uint32_t StartTime;
-    uint32_t CurrentTime;
-    uint32_t LastUpdateTime;
-    uint32_t DeltaTimeMS;
-    float DeltaTimeS;
+    //Timers
+    uint32_t WallTime; //in wall time
+    uint32_t PauseStartTime; //in wall time
+    uint32_t TimeDifference; //difference between wall time and game time
+    uint32_t GameTime; //in game time
+    uint32_t LastUpdateTime; //in game time
+    uint32_t DeltaTimeMS; //in game time
+    float DeltaTimeS; //in game time
     uint32_t FrameCounter;
     uint32_t LastFPSUpdateTime;
     Object* Objects;
@@ -98,6 +99,7 @@ typedef struct c_state {
     Object* StaticObjects;
     int StaticObjectCount;
     Scene_Camera* Camera;
+    SDL_Window* Window;
 } State;
 
 typedef struct c_memory {

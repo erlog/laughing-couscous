@@ -41,6 +41,7 @@ void gl_register_texture(Texture* texture) {
     return;
 }
 
+
 void gl_bind_texture(GLuint shader, Texture* texture, GLuint slot,
     const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
@@ -77,12 +78,7 @@ void gl_draw_debug_grid_lines() {
 
 void gl_draw_object(Scene_Camera* camera, Object* object) {
     glUseProgram(object->shader->id);
-    glBindVertexArray(object->model->vao);
-
-    //Bind diffuse texture
-    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
-    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
-    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
+    glBindVertexArray(object->vao);
 
     //Build model matrix
     glm::mat4 model_matrix;
@@ -120,16 +116,16 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     glBindVertexArray(0);
 }
 
-void gl_register_model(Model* model) {
+void gl_register_object(Object* object) {
     //Pack model data in a Vertex Buffer Object and save it in a Vertex Array
-    glGenVertexArrays(1, &model->vao);
-    glGenBuffers(1, &model->vbo);
+    glGenVertexArrays(1, &object->vao);
+    glGenBuffers(1, &object->vbo);
 
-    glBindVertexArray(model->vao);
+    glBindVertexArray(object->vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER, model->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Face)*model->face_count,
-        model->faces, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, object->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Face)*object->model->face_count,
+        object->model->faces, GL_STATIC_DRAW);
 
     //Bind vertices, uvs, normals, tangents, and bitangents
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 15*sizeof(GLfloat),
@@ -187,3 +183,4 @@ bool gl_load_shader(const char* shader_path, GLuint* shader_id, GLenum shader_ty
     wfree(shader_source);
     return true;
 }
+

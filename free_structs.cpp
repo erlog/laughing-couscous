@@ -9,8 +9,7 @@ void wfree_model(Model* object) {
 }
 
 void wfree_shader(Shader* object) {
-    wfree(object->asset_path_vert);
-    wfree(object->asset_path_frag);
+    wfree(object->name);
     return;
 }
 
