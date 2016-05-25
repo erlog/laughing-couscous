@@ -1,5 +1,5 @@
-#define MAC_COMPILE 0
-#define LINUX_COMPILE 1
+#define MAC_COMPILE 1
+#define LINUX_COMPILE 0
 
 //C Standard Library
 #include <time.h>
@@ -10,9 +10,6 @@
 
 //Other Libraries
 #include <GL/glew.h>
-#if LINUX_COMPILE
-    #include <GL/glext.h>
-#endif
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,6 +22,9 @@
 #include <SDL_opengl.h>
 #if MAC_COMPILE
     #include <SDL_opengl_glext.h>
+#endif
+#if LINUX_COMPILE
+    #include <GL/glext.h>
 #endif
 #include <ruby.h>
 //Namespaces
