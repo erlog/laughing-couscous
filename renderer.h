@@ -90,7 +90,7 @@ typedef struct c_settings {
 typedef struct c_state {
     bool IsRunning;
     bool IsPaused;
-    Settings_Object* Settings;
+    Settings_Object Settings;
     Texture* Screen;
     //Timers
     uint32_t WallTime; //in wall time

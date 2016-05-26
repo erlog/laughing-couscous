@@ -35,7 +35,6 @@ void wfree_state(State* object) {
     for(int i = 0; i < object->StaticObjectCount; i++) {
         wfree_object(&object->StaticObjects[i]);
     }
-    wfree(object->Settings);
     wfree(object->StaticObjects);
     wfree_camera(object->Camera);
     wfree(object->Camera);

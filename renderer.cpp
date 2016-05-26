@@ -75,8 +75,8 @@ int main() {
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
     state->Screen->asset_path = str_lit("Flamerokz");
-    state->Screen->width = state->Settings->horizontal_resolution;
-    state->Screen->height = state->Settings->vertical_resolution;
+    state->Screen->width = state->Settings.horizontal_resolution;
+    state->Screen->height = state->Settings.vertical_resolution;
     state->Screen->bytes_per_pixel = 3;
     state->Screen->pitch = state->Screen->width * state->Screen->bytes_per_pixel;
     state->Screen->buffer_size = state->Screen->pitch * state->Screen->height;
@@ -106,7 +106,7 @@ int main() {
     if(context == NULL) {
         message_log("Couldn't get-", "OpenGL Context for window"); return 0;
     }
-    if(state->Settings->vsync) { if(SDL_GL_SetSwapInterval(1) != 0) {
+    if(state->Settings.vsync) { if(SDL_GL_SetSwapInterval(1) != 0) {
         //late-swap tearing if the vsync call fails
         SDL_GL_SetSwapInterval(-1);
     } }

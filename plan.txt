@@ -1,8 +1,14 @@
 //TODO:
 add real lighting
+    status: read all of Carmack's .plan files
 come up with a level format
+    status: thought about it
 decide on a proper string format
+    status: not started
 generalize key input for later rebinding
-settings file ini
+    status: not started
 alt-tab support
+    status: investigated and found nothing, ALT-TAB keystrokes are being
+            eaten while I have mouse focus
 learn to use Blender
+    status: ongoing
