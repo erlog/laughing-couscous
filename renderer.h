@@ -80,9 +80,17 @@ typedef struct c_camera {
     glm::mat4 projection;
 } Scene_Camera;
 
+typedef struct c_settings {
+    uint32_t horizontal_resolution;
+    uint32_t vertical_resolution;
+    bool vsync;
+    bool fullscreen;
+} Settings_Object;
+
 typedef struct c_state {
     bool IsRunning;
     bool IsPaused;
+    Settings_Object* Settings;
     Texture* Screen;
     //Timers
     uint32_t WallTime; //in wall time
@@ -110,6 +118,7 @@ typedef struct c_memory {
 //Globals
 const char* AssetFolderPath = "objects";
 const char* OutputFolderPath = "new_output";
+const char* SettingsINIPath = "settings.ini";
 
 //Generic utility functions
 //TODO: re-arrange source to not require any functions here

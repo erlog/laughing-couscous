@@ -1,4 +1,8 @@
 //TODO:
 add real lighting
 come up with a level format
+decide on a proper string format
+generalize key input for later rebinding
+settings file ini
+alt-tab support
 learn to use Blender

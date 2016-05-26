@@ -1,4 +1,8 @@
 void process_keyboard(State* state, const uint8_t* keystate) {
+    if(keystate[SDL_SCANCODE_TAB] & keystate[SDL_SCANCODE_LALT]) {
+        //TODO: figure out why this gets eaten
+        message_log("ALT-TAB");
+    }
     if(keystate[SDL_SCANCODE_W]) {
         state->Camera->physics->movement_vector.z = -1.f;
         state->Camera->physics->velocity = 4.50f;
@@ -34,10 +38,15 @@ void process_mouse(State* state) {
     physics->quaternion = rotation_y * physics->quaternion * rotation_x;
 }
 
-void handle_keyboard(State* state, SDL_KeyboardEvent key) {
+void handle_keyboard(State* state, SDL_Event event) {
+    SDL_KeyboardEvent key = event.key;
+
     switch(key.keysym.sym) {
         case SDLK_ESCAPE:
             state->IsRunning = false;
+            break;
+        case SDLK_TAB:
+            message_log("TAB");
             break;
         case SDLK_p:
             toggle_pause(state);

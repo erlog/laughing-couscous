@@ -221,15 +221,11 @@ void update_time(State* state) {
 
 void toggle_pause(State* state) {
     if(state->IsPaused) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);
-        SDL_GetRelativeMouseState(NULL, NULL); //to fix the jumping problem
         state->IsPaused = false;
         state->TimeDifference = state->WallTime - state->PauseStartTime;
         update_time(state);
         message_log("Unpaused-", state->GameTime);
     } else {
-        message_log("Pausing-", state->WallTime);
-        SDL_SetRelativeMouseMode(SDL_FALSE);
         state->IsPaused = true;
         state->PauseStartTime = state->GameTime;
         message_log("Paused-", state->GameTime);

@@ -1,5 +1,5 @@
-#define MAC_COMPILE 1
-#define LINUX_COMPILE 0
+#define MAC_COMPILE 0
+#define LINUX_COMPILE 1
 
 //C Standard Library
 #include <time.h>
@@ -35,6 +35,7 @@ using namespace std;
 #include "lodepng.hpp"
 #include "free_structs.cpp"
 #include "logging.cpp"
+#include "ini_handling.cpp"
 #include "gl_functions.cpp"
 #include "model_loader.cpp"
 #include "utilities.cpp"
@@ -69,12 +70,13 @@ int main() {
     State* state = (State*)walloc(sizeof(State));
     state->IsRunning = true;
     state->IsPaused = true; //Pause will be toggled when our window gains focus
+    load_settings(state);
 
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
     state->Screen->asset_path = str_lit("Flamerokz");
-    state->Screen->width = 682;
-    state->Screen->height = 384;
+    state->Screen->width = state->Settings->horizontal_resolution;
+    state->Screen->height = state->Settings->vertical_resolution;
     state->Screen->bytes_per_pixel = 3;
     state->Screen->pitch = state->Screen->width * state->Screen->bytes_per_pixel;
     state->Screen->buffer_size = state->Screen->pitch * state->Screen->height;
@@ -92,6 +94,7 @@ int main() {
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 ); //Use OpenGL 3.1
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    //TODO: implement fullscreen
     SDL_Window* window = SDL_CreateWindow( state->Screen->asset_path,
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, state->Screen->width,
         state->Screen->height, SDL_WINDOW_OPENGL);
@@ -103,9 +106,10 @@ int main() {
     if(context == NULL) {
         message_log("Couldn't get-", "OpenGL Context for window"); return 0;
     }
-    if(SDL_GL_SetSwapInterval(1) != 0) { //try for vsync
-        SDL_GL_SetSwapInterval(-1); //late-swap tearing if the vsync call fails
-    }
+    if(state->Settings->vsync) { if(SDL_GL_SetSwapInterval(1) != 0) {
+        //late-swap tearing if the vsync call fails
+        SDL_GL_SetSwapInterval(-1);
+    } }
 
     const uint8_t* SDL_KeyState = SDL_GetKeyboardState(NULL);
 
@@ -204,11 +208,16 @@ int main() {
             case SDL_WINDOWEVENT:
                 if(event.window.event == SDL_WINDOWEVENT_SHOWN) {
                     SDL_SetRelativeMouseMode(SDL_TRUE);
+                    //eat first input to avoid movement jitter
+                    SDL_GetRelativeMouseState(NULL, NULL);
+                    toggle_pause(state);
+                } else if(event.window.event == SDL_WINDOWEVENT_HIDDEN) {
+                    SDL_SetRelativeMouseMode(SDL_FALSE);
                     toggle_pause(state);
                 }
                 break;
             case SDL_KEYDOWN:
-                handle_keyboard(state, event.key);
+                handle_keyboard(state, event);
                 break;
             case SDL_QUIT:
                 state->IsRunning = false;
