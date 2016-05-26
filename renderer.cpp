@@ -1,5 +1,5 @@
-#define MAC_COMPILE 0
-#define LINUX_COMPILE 1
+//#define MAC_COMPILE 0
+//#define LINUX_COMPILE 1
 
 //C Standard Library
 #include <time.h>
