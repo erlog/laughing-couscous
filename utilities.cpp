@@ -91,13 +91,14 @@ bool load_shaders(Object* object) {
         return false;
     }
     glAttachShader(program_id, shader_id);
+
     if(!gl_load_shader(asset_path_frag, &shader_id, GL_FRAGMENT_SHADER)) {
         message_log("Error loading fragment shader-", asset_path_frag);
         return false;
     }
+    glAttachShader(program_id, shader_id);
 
     object->shader->id = program_id;
-    glAttachShader(program_id, shader_id);
     glBindAttribLocation(object->shader->id, 0, "local_position");
     glBindAttribLocation(object->shader->id, 1, "texture_coord");
     glBindAttribLocation(object->shader->id, 2, "surface_normal");
