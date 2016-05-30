@@ -5,15 +5,22 @@ void normalize(glm::vec4* vector) {
     *vector = glm::normalize(*vector); return;
 }
 
-void gl_bind_mat4(GLuint shader, glm::mat4 matrix, const char* variable) {
+void gl_bind_mat(GLuint shader, glm::mat4 matrix, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
     return;
 }
+void gl_bind_mat(GLuint shader, glm::mat3 matrix, const char* variable) {
+    GLint loc = glGetUniformLocation(shader, variable);
+    if(loc != -1) {
+        glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+    return;
+}
 
-void gl_bind_vec3(GLuint shader, glm::vec3 vector, const char* variable) {
+void gl_bind_vec(GLuint shader, glm::vec3 vector, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniform3fv(loc, 1, glm::value_ptr(vector));
@@ -21,7 +28,7 @@ void gl_bind_vec3(GLuint shader, glm::vec3 vector, const char* variable) {
     return;
 }
 
-void gl_bind_vec4(GLuint shader, glm::vec4 vector, const char* variable) {
+void gl_bind_vec(GLuint shader, glm::vec4 vector, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniform4fv(loc, 1, glm::value_ptr(vector));
@@ -76,6 +83,24 @@ void gl_draw_debug_grid_lines() {
     glEnd();
 }
 
+void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
+    glm::vec4 color) {
+    //Build model matrix
+    glm::mat4 model_matrix;
+    model_matrix = glm::translate(model_matrix, position);
+
+    glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
+    glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(
+        camera->view * model_matrix)));
+
+    gl_bind_vec(object->shader->id, color, "matte_color");
+    gl_bind_mat(object->shader->id, model_view_projection, "model_view_projection");
+    gl_bind_mat(object->shader->id, normal_matrix, "normal_matrix");
+
+    //Render VAO
+    glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);
+}
+
 void gl_draw_object(Scene_Camera* camera, Object* object) {
     glUseProgram(object->shader->id);
     glBindVertexArray(object->vao);
@@ -89,25 +114,17 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     model_matrix = glm::scale(model_matrix, object->physics->scale);
     model_matrix = glm::scale(model_matrix, object->model->local_scale);
 
-    //Build view matrix
-    //We're using quaternions for the camera which will lead
-    //to the camera rolling around the Z axis. To get around this we choose
-    //a point in front of the camera, rotate that point using a quaternion, and
-    //then use the GLM function LookAt to generate a camera orientation in the
-    //coordinate space we generally consider to be upright and facing forward
-    glm::vec3 camera_direction =
-        glm::vec3(0.f, 0.f, -1.f) * camera->physics->quaternion;
-    normalize(&camera_direction);
-    glm::mat4 view_matrix = glm::lookAt(camera->physics->position,
-        camera_direction + camera->physics->position, glm::vec3(0.f, 1.f, 0.f));
-    camera->physics->quaternion = glm::quat_cast(view_matrix);
+    //Combine matrices
+    glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
+    glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(
+        camera->view * model_matrix)));
 
-    gl_bind_vec4(object->shader->id, object->model->color, "matte_color");
-    gl_bind_vec3(object->shader->id, camera_direction, "camera_direction");
-    gl_bind_vec3(object->shader->id, object->light_direction, "light_direction");
-    gl_bind_mat4(object->shader->id, model_matrix, "model");
-    gl_bind_mat4(object->shader->id, view_matrix, "view");
-    gl_bind_mat4(object->shader->id, camera->projection, "projection");
+    //Bind uniforms
+    gl_bind_vec(object->shader->id, object->model->color, "matte_color");
+    gl_bind_vec(object->shader->id, camera->direction, "camera_direction");
+    gl_bind_vec(object->shader->id, object->light_direction, "light_direction");
+    gl_bind_mat(object->shader->id, model_view_projection, "model_view_projection");
+    gl_bind_mat(object->shader->id, normal_matrix, "normal_matrix");
 
     //Render VAO
     glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);
@@ -183,4 +200,3 @@ bool gl_load_shader(const char* shader_path, GLuint* shader_id, GLenum shader_ty
     wfree(shader_source);
     return true;
 }
-

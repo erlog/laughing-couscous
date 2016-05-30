@@ -159,8 +159,8 @@ int main() {
     state->ObjectCount = 3;
     state->Objects = (Object*)walloc(sizeof(Object)*state->ObjectCount);
 
-    load_object(&state->Objects[0], "cube", "dice", "dice", "dice",
-        "shader");
+    load_object(&state->Objects[0], "cube", "blank", "blank_nm",
+        "blank_spec", "flat");
     state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
     state->Objects[0].light_direction = light_direction;
@@ -184,8 +184,8 @@ int main() {
 
     state->StaticObjectCount = 1;
     state->StaticObjects = (Object*)walloc(sizeof(Object)*state->StaticObjectCount);
-    load_object(&state->StaticObjects[0], "ground_plane",
-        "checkerboard", "checkerboard_nm", "checkerboard_spec", "flat");
+    load_object(&state->StaticObjects[0], "test_level",
+        "blank", "blank_nm", "blank_spec", "flat");
     state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
     state->StaticObjects[0].light_direction = light_direction;
     state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
@@ -236,6 +236,18 @@ int main() {
 
             //Update camera
             update_physics_object(state->Camera->physics, state->DeltaTimeS);
+            //We're using quaternions for the camera which will lead
+            //to the camera rolling around the Z axis. To get around this we choose
+            //a point in front of the camera, rotate that point using a quaternion, and
+            //then use the GLM function LookAt to generate a camera orientation in the
+            //coordinate space we generally consider to be upright and facing forward
+            state->Camera->direction = glm::normalize(
+                glm::vec3(0.f, 0.f, -1.f) * state->Camera->physics->quaternion);
+            state->Camera->view  = glm::lookAt(state->Camera->physics->position,
+                state->Camera->direction + state->Camera->physics->position,
+                glm::vec3(0.f, 1.f, 0.f));
+            state->Camera->physics->quaternion =
+                glm::quat_cast(state->Camera->view);
 
             //draw static objects
             for(int i = 0; i < state->StaticObjectCount; i++) {
@@ -244,10 +256,21 @@ int main() {
 
             //draw dynamic objects
             for(int i = 0; i < state->ObjectCount; i++) {
-                state->Objects[i].physics->angular_velocity = 30.f;
-                update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
+                //state->Objects[i].physics->angular_velocity = 30.f;
+                //update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
+
+
+            //fast draw cubes
+            glUseProgram(state->Objects[0].shader->id);
+            glBindVertexArray(state->Objects[0].vao);
+            for(int i = 0; i < 1000; i++) {
+                gl_fast_draw_vao(state->Camera, &state->Objects[0],
+                    glm::vec3(0.0f, (float)i, 0.0f),
+                    glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+            }
+            glBindVertexArray(0);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

@@ -8,10 +8,8 @@ in vec3 surface_bitangent;
 
 uniform vec3 camera_direction;
 uniform vec3 light_direction;
-//Matrices
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+uniform mat4 model_view_projection;
+uniform mat3 normal_matrix;
 
 //Outputs
 out vec2 texture_coordinate;
@@ -21,12 +19,10 @@ out vec3 local_normal;
 out mat3 normal_matrix;
 
 void main() {
-    mat4 vert_matrix = projection * view * model;
-    gl_Position = vert_matrix * vec4(local_position, 1.0);
+    gl_Position = model_view_projection * vec4(local_position, 1.0);
     
     texture_coordinate = vec2(texture_coord.x, texture_coord.y);
     
-    normal_matrix = transpose(inverse(mat3(view * model)));
     local_tangent = normalize(normal_matrix * surface_tangent);
     local_bitangent = normalize(normal_matrix * surface_bitangent);
     local_normal = normalize(normal_matrix * surface_normal);

@@ -78,6 +78,8 @@ typedef struct c_object {
 typedef struct c_camera {
     Physics_Object* physics;
     glm::mat4 projection;
+    glm::mat4 view;
+    glm::vec3 direction;
 } Scene_Camera;
 
 typedef struct c_settings {
