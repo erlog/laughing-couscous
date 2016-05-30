@@ -73,34 +73,6 @@ int main() {
     state->IsPaused = true; //Pause will be toggled when our window gains focus
     load_settings(state);
 
-    //Testing with octrees
-    Octree octree;
-    octree.max_depth = 16;
-    octree.root.radius = 2.0;
-    octree.position_table = (glm::vec3*)walloc(sizeof(glm::vec3)*8);
-    octree.position_table[0] = glm::vec3(-0.5f, -0.5f, -0.5f);
-    octree.position_table[1] = glm::vec3( 0.5f, -0.5f, -0.5f);
-    octree.position_table[2] = glm::vec3(-0.5f,  0.5f, -0.5f);
-    octree.position_table[3] = glm::vec3( 0.5f,  0.5f, -0.5f);
-    octree.position_table[4] = glm::vec3(-0.5f, -0.5f,  0.5f);
-    octree.position_table[5] = glm::vec3( 0.5f, -0.5f,  0.5f);
-    octree.position_table[6] = glm::vec3(-0.5f,  0.5f,  0.5f);
-    octree.position_table[7] = glm::vec3( 0.5f,  0.5f,  0.5f);
-
-    octree.root.children = (Octree_Node*)walloc(sizeof(Octree_Node)*8);
-    octree.root.position = glm::vec3(0.0f, 0.0f, 0.0f);
-    octree.root.filled_children = 0x00;
-    time_t t;
-    srand((unsigned) time(&t));
-    for(int i = 0; i < 8; i++) {
-        octree.root.children[i].children = NULL;
-        octree.root.children[i].filled_children = rand() % 0xFF;
-        octree.root.children[i].parent = &octree.root;
-        octree.root.children[i].radius = octree.root.radius/2.0f;
-        octree.root.children[i].position = octree.root.position +
-            (octree.position_table[i] * octree.root.radius);
-    }
-
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
     state->Screen->asset_path = str_lit("Flamerokz");
@@ -185,6 +157,7 @@ int main() {
     Object debug_cube;
     load_object(&debug_cube, "cube", "blank", "blank_nm",
         "blank_spec", "flat");
+    debug_cube.light_direction = glm::vec3(0.0, 0.0f, -1.f);
 
     glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
     normalize(&light_direction);
@@ -222,6 +195,9 @@ int main() {
     state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
     state->StaticObjects[0].light_direction = light_direction;
     state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
+
+    Octree octree;
+    generate_octree(&octree, state->StaticObjects[0].model);
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
