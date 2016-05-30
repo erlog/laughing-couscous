@@ -40,6 +40,7 @@ using namespace std;
 #include "model_loader.cpp"
 #include "utilities.cpp"
 #include "hid_input.cpp"
+#include "octree.cpp"
 //#include "ruby_functions.cpp"
 
 void update_physics_object(Physics_Object* object, float delta_time_s) {
@@ -71,6 +72,34 @@ int main() {
     state->IsRunning = true;
     state->IsPaused = true; //Pause will be toggled when our window gains focus
     load_settings(state);
+
+    //Testing with octrees
+    Octree octree;
+    octree.max_depth = 16;
+    octree.root.radius = 2.0;
+    octree.position_table = (glm::vec3*)walloc(sizeof(glm::vec3)*8);
+    octree.position_table[0] = glm::vec3(-0.5f, -0.5f, -0.5f);
+    octree.position_table[1] = glm::vec3( 0.5f, -0.5f, -0.5f);
+    octree.position_table[2] = glm::vec3(-0.5f,  0.5f, -0.5f);
+    octree.position_table[3] = glm::vec3( 0.5f,  0.5f, -0.5f);
+    octree.position_table[4] = glm::vec3(-0.5f, -0.5f,  0.5f);
+    octree.position_table[5] = glm::vec3( 0.5f, -0.5f,  0.5f);
+    octree.position_table[6] = glm::vec3(-0.5f,  0.5f,  0.5f);
+    octree.position_table[7] = glm::vec3( 0.5f,  0.5f,  0.5f);
+
+    octree.root.children = (Octree_Node*)walloc(sizeof(Octree_Node)*8);
+    octree.root.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    octree.root.filled_children = 0x00;
+    time_t t;
+    srand((unsigned) time(&t));
+    for(int i = 0; i < 8; i++) {
+        octree.root.children[i].children = NULL;
+        octree.root.children[i].filled_children = rand() % 0xFF;
+        octree.root.children[i].parent = &octree.root;
+        octree.root.children[i].radius = octree.root.radius/2.0f;
+        octree.root.children[i].position = octree.root.position +
+            (octree.position_table[i] * octree.root.radius);
+    }
 
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
@@ -153,6 +182,10 @@ int main() {
 
 
     //Load Objects
+    Object debug_cube;
+    load_object(&debug_cube, "cube", "blank", "blank_nm",
+        "blank_spec", "flat");
+
     glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
     normalize(&light_direction);
 
@@ -168,7 +201,7 @@ int main() {
     state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
-        "blank_spec", "flat");
+        "blank_spec", "flat_shaded");
     state->Objects[1].model->local_position = glm::vec3(0.f, 0.5f, 0.f);
     state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
@@ -176,7 +209,7 @@ int main() {
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
-        "blank_spec", "flat");
+        "blank_spec", "flat_shaded");
     state->Objects[2].physics->position = glm::vec3(-1.5f, 1.f, 0.f);
     state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
     state->Objects[2].light_direction = light_direction;
@@ -185,7 +218,7 @@ int main() {
     state->StaticObjectCount = 1;
     state->StaticObjects = (Object*)walloc(sizeof(Object)*state->StaticObjectCount);
     load_object(&state->StaticObjects[0], "test_level",
-        "blank", "blank_nm", "blank_spec", "flat");
+        "blank", "blank_nm", "blank_spec", "flat_shaded");
     state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
     state->StaticObjects[0].light_direction = light_direction;
     state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
@@ -249,9 +282,10 @@ int main() {
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
 
+#if 0
             //draw static objects
             for(int i = 0; i < state->StaticObjectCount; i++) {
-                gl_draw_object(state->Camera, &state->StaticObjects[i]);
+                //gl_draw_object(state->Camera, &state->StaticObjects[i]);
             }
 
             //draw dynamic objects
@@ -260,17 +294,15 @@ int main() {
                 //update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
-
-
-            //fast draw cubes
-            glUseProgram(state->Objects[0].shader->id);
-            glBindVertexArray(state->Objects[0].vao);
-            for(int i = 0; i < 1000; i++) {
-                gl_fast_draw_vao(state->Camera, &state->Objects[0],
-                    glm::vec3(0.0f, (float)i, 0.0f),
-                    glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-            }
+#endif
+            //draw debug octree
+            glUseProgram(debug_cube.shader->id);
+            glBindVertexArray(debug_cube.vao);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+            octree_debug_draw(&octree, &octree.root, state->Camera, &debug_cube);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
             glBindVertexArray(0);
+            //state->IsRunning = false;
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

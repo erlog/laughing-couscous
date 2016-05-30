@@ -117,6 +117,20 @@ typedef struct c_memory {
     size_t MemoryFreed;
 } Memory_Info;
 
+typedef struct c_octree_node {
+    uint8_t filled_children;
+    GLfloat radius;
+    glm::vec3 position;
+    c_octree_node* parent;
+    c_octree_node* children;
+} Octree_Node;
+
+typedef struct c_octree {
+    uint32_t max_depth;
+    glm::vec3* position_table;
+    c_octree_node root;
+} Octree;
+
 //Globals
 const char* AssetFolderPath = "objects";
 const char* OutputFolderPath = "new_output";

@@ -84,10 +84,11 @@ void gl_draw_debug_grid_lines() {
 }
 
 void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
-    glm::vec4 color) {
+    glm::vec4 color, GLfloat scale) {
     //Build model matrix
     glm::mat4 model_matrix;
-    model_matrix = glm::translate(model_matrix, position);
+    model_matrix = glm::scale(glm::translate(model_matrix, position),
+        glm::vec3(scale, scale, scale) );
 
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
     glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(
