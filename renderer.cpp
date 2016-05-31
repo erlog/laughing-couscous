@@ -73,6 +73,11 @@ int main() {
     state->IsPaused = true; //Pause will be toggled when our window gains focus
     load_settings(state);
 
+    //DEBUG: Initialize rand()
+    //TODO: remove this
+    time_t t;
+    srand((unsigned) time(&t));
+
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
     state->Screen->asset_path = str_lit("Flamerokz");

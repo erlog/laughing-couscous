@@ -33,11 +33,10 @@ Octree initialize_octree(uint32_t max_depth, GLfloat root_radius) {
 
 void generate_octree(Octree* octree, Model* model) {
     *octree = initialize_octree(32, 2.0f);
-    time_t t;
-    srand((unsigned) time(&t));
     for(int i = 0; i < 8; i++) {
         octree->root.children[i].children = NULL;
-        octree->root.children[i].filled_children = rand() % 0xFF;
+        octree->root.children[i].filled_children = (int)(debug_rand()*255);
+        message_log("filled-", octree->root.children[i].filled_children);
         octree->root.children[i].parent = &octree->root;
         octree->root.children[i].radius = octree->root.radius/2.0f;
         octree->root.children[i].position = octree->root.position +
