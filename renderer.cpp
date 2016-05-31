@@ -181,10 +181,11 @@ int main() {
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
     state->Objects[1].model->local_position = glm::vec3(0.f, 0.5f, 0.f);
-    state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
+    state->Objects[1].physics->position = glm::vec3(5.0f, 0.f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[1].light_direction = light_direction;
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
+    state->Objects[1].physics->scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
@@ -202,7 +203,10 @@ int main() {
     state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
 
     Octree octree;
-    generate_octree(&octree, state->StaticObjects[0].model);
+    generate_octree(&octree, &state->StaticObjects[0]);
+    put_bounding_box_in_octree(&octree, &state->Objects[0]);
+    put_bounding_box_in_octree(&octree, &state->Objects[1]);
+    put_bounding_box_in_octree(&octree, &state->Objects[2]);
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
@@ -243,6 +247,7 @@ int main() {
         process_keyboard(state, SDL_KeyState);
         //TODO: is there a better way to control our framerate?
         if( state->DeltaTimeMS > 30 ) {
+            state->DeltaTimeMS = 30;
             process_mouse(state);
 
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
@@ -263,10 +268,9 @@ int main() {
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
 
-#if 0
             //draw static objects
             for(int i = 0; i < state->StaticObjectCount; i++) {
-                //gl_draw_object(state->Camera, &state->StaticObjects[i]);
+                gl_draw_object(state->Camera, &state->StaticObjects[i]);
             }
 
             //draw dynamic objects
@@ -275,14 +279,14 @@ int main() {
                 //update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
-#endif
+
             //draw debug octree
+            gl_toggle_wireframe(true);
             glUseProgram(debug_cube.shader->id);
             glBindVertexArray(debug_cube.vao);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
             octree_debug_draw(&octree, &octree.root, state->Camera, &debug_cube);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
             glBindVertexArray(0);
+            gl_toggle_wireframe(false);
             //state->IsRunning = false;
 
             SDL_GL_SwapWindow(window);

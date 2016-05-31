@@ -1,8 +1,54 @@
+//Vector methods
 void normalize(glm::vec3* vector) {
     *vector = glm::normalize(*vector); return;
 }
 void normalize(glm::vec4* vector) {
     *vector = glm::normalize(*vector); return;
+}
+
+inline GLfloat distance_squared(glm::vec3 a, glm::vec3 b) {
+    GLfloat x_diff = b.x - a.x;
+    GLfloat y_diff = b.y - a.y;
+    GLfloat z_diff = b.z - a.z;
+    return (x_diff * x_diff) + (y_diff * y_diff) + (z_diff * z_diff);
+}
+
+inline glm::vec3 absolute_difference(glm::vec3 a, glm::vec3 b) {
+    glm::vec3 result;
+    result.x = abs(a.x - b.x);
+    result.y = abs(a.y - b.y);
+    result.z = abs(a.z - b.z);
+    return result;
+}
+
+inline GLfloat vector_min_component(glm::vec3 vector) {
+    GLfloat output = vector.x;
+    if(vector.y < output) { output = vector.y; }
+    if(vector.z < output) { output = vector.z; }
+    return output;
+}
+inline GLfloat vector_max_component(glm::vec3 vector) {
+    GLfloat output = vector.x;
+    if(vector.y > output) { output = vector.y; }
+    if(vector.z > output) { output = vector.z; }
+    return output;
+}
+
+inline void vector_set_if_lower(glm::vec3* input, glm::vec3* output) {
+    if(input->x < output->x) { output->x = input->x; }
+    if(input->y < output->y) { output->y = input->y; }
+    if(input->z < output->z) { output->z = input->z; }
+}
+inline void vector_set_if_higher(glm::vec3* input, glm::vec3* output) {
+    if(input->x > output->x) { output->x = input->x; }
+    if(input->y > output->y) { output->y = input->y; }
+    if(input->z > output->z) { output->z = input->z; }
+}
+
+//GL methods
+void gl_toggle_wireframe(bool on) {
+    if(on) { glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); }
+    else { glPolygonMode( GL_FRONT_AND_BACK, GL_FILL); }
 }
 
 void gl_bind_mat(GLuint shader, glm::mat4 matrix, const char* variable) {
@@ -102,11 +148,7 @@ void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
     glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);
 }
 
-void gl_draw_object(Scene_Camera* camera, Object* object) {
-    glUseProgram(object->shader->id);
-    glBindVertexArray(object->vao);
-
-    //Build model matrix
+inline glm::mat4 build_model_matrix(Object* object) {
     glm::mat4 model_matrix;
     model_matrix = glm::translate(model_matrix, object->physics->position);
     model_matrix = glm::translate(model_matrix, object->model->local_position);
@@ -114,6 +156,16 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     model_matrix *= glm::mat4_cast(object->model->local_quaternion);
     model_matrix = glm::scale(model_matrix, object->physics->scale);
     model_matrix = glm::scale(model_matrix, object->model->local_scale);
+    return model_matrix;
+}
+
+
+void gl_draw_object(Scene_Camera* camera, Object* object) {
+    glUseProgram(object->shader->id);
+    glBindVertexArray(object->vao);
+
+    //Build model matrix
+    glm::mat4 model_matrix = build_model_matrix(object);
 
     //Combine matrices
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;

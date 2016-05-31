@@ -36,7 +36,6 @@ void process_node(Model* model, const aiScene* scene, aiNode* node) {
     return;
 }
 
-
 bool load_model(const char* model_name, Model* model) {
     //TODO: make this properly recursive and handle multiple meshes and stuff
     model->asset_path = construct_asset_path("models", model_name, "obj");
@@ -50,37 +49,19 @@ bool load_model(const char* model_name, Model* model) {
 
     process_node(model, scene, scene->mRootNode->mChildren[0]);
 
-    return true;
-
-#if 0
     //Compute bounding box
-    glm::vec3 bounding_minimum = vertices[0];
-    glm::vec3 bounding_maximum = vertices[1];
-    for(int i = 0; i < vertex_count; i++) {
-        //minimums
-        if(vertices[i].x < bounding_minimum.x) {
-            bounding_minimum.x = vertices[i].x;
-        }
-        if(vertices[i].y < bounding_minimum.y) {
-            bounding_minimum.y = vertices[i].y;
-        }
-        if(vertices[i].z < bounding_minimum.z) {
-            bounding_minimum.z = vertices[i].z;
-        }
-        //maximums
-        if(vertices[i].x > bounding_maximum.x) {
-            bounding_maximum.x = vertices[i].x;
-        }
-        if(vertices[i].y > bounding_maximum.y) {
-            bounding_maximum.y = vertices[i].y;
-        }
-        if(vertices[i].z > bounding_maximum.z) {
-            bounding_maximum.z = vertices[i].z;
-        }
+    glm::vec3 bounding_minimum = model->faces[0].a.v;
+    glm::vec3 bounding_maximum = model->faces[0].a.v;
+    for(GLuint i = 0; i < model->face_count; i++) {
+        vector_set_if_lower(&model->faces[i].a.v, &bounding_minimum);
+        vector_set_if_higher(&model->faces[i].a.v, &bounding_maximum);
+        vector_set_if_lower(&model->faces[i].b.v, &bounding_minimum);
+        vector_set_if_higher(&model->faces[i].b.v, &bounding_maximum);
+        vector_set_if_lower(&model->faces[i].c.v, &bounding_minimum);
+        vector_set_if_higher(&model->faces[i].c.v, &bounding_maximum);
     }
     model->bounding_minimum = bounding_minimum;
     model->bounding_maximum = bounding_maximum;
 
-#endif
    return true;
 }

@@ -119,6 +119,8 @@ typedef struct c_memory {
 
 typedef struct c_octree_node {
     uint8_t filled_children;
+    bool has_children;
+    uint8_t depth;
     GLfloat radius;
     glm::vec3 position;
     c_octree_node* parent;
