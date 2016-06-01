@@ -159,10 +159,9 @@ int main() {
 
 
     //Load Objects
-    Object debug_cube;
-    load_object(&debug_cube, "cube", "blank", "blank_nm",
+    state->Debug_Cube = (Object*)walloc(sizeof(Object));
+    load_object(state->Debug_Cube, "cube", "blank", "blank_nm",
         "blank_spec", "flat");
-    debug_cube.light_direction = glm::vec3(0.0, 0.0f, -1.f);
 
     glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
     normalize(&light_direction);
@@ -189,7 +188,7 @@ int main() {
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[2].physics->position = glm::vec3(-1.5f, 1.f, 0.f);
+    state->Objects[2].physics->position = glm::vec3(-16.5f, -16.5f, -16.5f);
     state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
     state->Objects[2].light_direction = light_direction;
     state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
@@ -203,10 +202,13 @@ int main() {
     state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
 
     Octree octree;
-    generate_octree(&octree, &state->StaticObjects[0]);
-    put_bounding_box_in_octree(&octree, &state->Objects[0]);
-    put_bounding_box_in_octree(&octree, &state->Objects[1]);
+    octree_from_object(&octree, &state->StaticObjects[0]);
+    put_object_in_octree(&octree, &state->Objects[1]);
+#if 0
     put_bounding_box_in_octree(&octree, &state->Objects[2]);
+    put_object_in_octree(&octree, &state->StaticObjects[0]);
+    put_bounding_box_in_octree(&octree, &state->Objects[0]);
+#endif
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
@@ -270,7 +272,7 @@ int main() {
 
             //draw static objects
             for(int i = 0; i < state->StaticObjectCount; i++) {
-                gl_draw_object(state->Camera, &state->StaticObjects[i]);
+                //gl_draw_object(state->Camera, &state->StaticObjects[i]);
             }
 
             //draw dynamic objects
@@ -281,13 +283,7 @@ int main() {
             }
 
             //draw debug octree
-            gl_toggle_wireframe(true);
-            glUseProgram(debug_cube.shader->id);
-            glBindVertexArray(debug_cube.vao);
-            octree_debug_draw(&octree, &octree.root, state->Camera, &debug_cube);
-            glBindVertexArray(0);
-            gl_toggle_wireframe(false);
-            //state->IsRunning = false;
+            octree_debug_draw(&octree, state);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

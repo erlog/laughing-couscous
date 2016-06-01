@@ -104,6 +104,7 @@ typedef struct c_state {
     float DeltaTimeS; //in game time
     uint32_t FrameCounter;
     uint32_t LastFPSUpdateTime;
+    Object* Debug_Cube;
     Object* Objects;
     int ObjectCount;
     Object* StaticObjects;
@@ -129,7 +130,6 @@ typedef struct c_octree_node {
 
 typedef struct c_octree {
     uint32_t max_depth;
-    glm::vec3* position_table;
     c_octree_node root;
 } Octree;
 
