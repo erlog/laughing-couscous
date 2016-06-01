@@ -49,7 +49,10 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
         normalize(&object->rotation_vector);
         float amount = glm::radians(delta_time_s * object->angular_velocity);
         object->quaternion = glm::rotate(object->quaternion, amount, object->rotation_vector);
-        object->angular_velocity *= (delta_time_s * object->deceleration_factor);
+        object->angular_velocity -= object->angular_velocity * delta_time_s *
+            object->deceleration_factor;
+    } else {
+        object->angular_velocity = 0;
     }
     //translate
     if(object->velocity > 0) {
@@ -58,8 +61,10 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
             object->movement_vector * object->quaternion;
         new_position.y = 0;
         object->position += new_position;
-        //decelerate
-        object->velocity *= (delta_time_s * object->deceleration_factor);
+        object->velocity -= object->velocity * delta_time_s *
+            object->deceleration_factor;
+    } else {
+        object->velocity = 0;
     }
 
     return;
