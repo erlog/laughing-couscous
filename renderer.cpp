@@ -49,7 +49,10 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
         normalize(&object->rotation_vector);
         float amount = glm::radians(delta_time_s * object->angular_velocity);
         object->quaternion = glm::rotate(object->quaternion, amount, object->rotation_vector);
-        object->angular_velocity *= (delta_time_s * object->deceleration_factor);
+        object->angular_velocity -= object->angular_velocity * delta_time_s *
+            object->deceleration_factor;
+    } else {
+        object->angular_velocity = 0;
     }
     //translate
     if(object->velocity > 0) {
@@ -58,10 +61,14 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
             object->movement_vector * object->quaternion;
         new_position.y = 0;
         object->position += new_position;
-        //decelerate
-        object->velocity *= (delta_time_s * object->deceleration_factor);
+        object->velocity -= object->velocity * delta_time_s *
+            object->deceleration_factor;
+    } else {
+        object->velocity = 0;
     }
 
+    //object->fall_speed += 9.81 * delta_time_s;
+    //object->position.y -= object->fall_speed * delta_time_s;
     return;
 }
 
@@ -72,6 +79,11 @@ int main() {
     state->IsRunning = true;
     state->IsPaused = true; //Pause will be toggled when our window gains focus
     load_settings(state);
+
+    //DEBUG: Initialize rand()
+    //TODO: remove this
+    time_t t;
+    srand((unsigned) time(&t));
 
     //Initialize screen struct and buffer for taking screenshots
     state->Screen = (Texture*)walloc(sizeof(Texture));
@@ -144,7 +156,7 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->physics->position = glm::vec3(0.f, 1.4f, 3.f);
+    state->Camera->physics->position = glm::vec3(0.f, 1.7f, 3.f);
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -154,10 +166,9 @@ int main() {
 
 
     //Load Objects
-    Object debug_cube;
-    load_object(&debug_cube, "cube", "blank", "blank_nm",
+    state->Debug_Cube = (Object*)walloc(sizeof(Object));
+    load_object(state->Debug_Cube, "cube", "blank", "blank_nm",
         "blank_spec", "flat");
-    debug_cube.light_direction = glm::vec3(0.0, 0.0f, -1.f);
 
     glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
     normalize(&light_direction);
@@ -167,23 +178,24 @@ int main() {
 
     load_object(&state->Objects[0], "cube", "blank", "blank_nm",
         "blank_spec", "flat");
-    state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
+    state->Objects[0].physics->position = glm::vec3(-10.5f, 0.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
     state->Objects[0].light_direction = light_direction;
-    state->Objects[0].model->local_scale = glm::vec3(0.5f, 0.5f, 0.5f);
+    state->Objects[0].model->local_scale = glm::vec3(1.f, 1.f, 1.f);
     state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[1].model->local_position = glm::vec3(0.f, 0.5f, 0.f);
-    state->Objects[1].physics->position = glm::vec3(1.5f, 0.f, 0.f);
+    state->Objects[1].model->local_position = glm::vec3(0.0f, 0.0f, 0.f);
+    state->Objects[1].physics->position = glm::vec3(15.0f, 0.0f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[1].light_direction = light_direction;
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
+    state->Objects[1].physics->scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[2].physics->position = glm::vec3(-1.5f, 1.f, 0.f);
+    state->Objects[2].physics->position = glm::vec3(-15.5f, 0.f, 0.f);
     state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
     state->Objects[2].light_direction = light_direction;
     state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
@@ -197,7 +209,16 @@ int main() {
     state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
 
     Octree octree;
-    generate_octree(&octree, state->StaticObjects[0].model);
+    octree_from_object(&octree, &state->StaticObjects[0]);
+    put_bounding_box_in_octree(&octree, &state->Objects[0]);
+    put_bounding_box_in_octree(&octree, &state->Objects[1]);
+    put_bounding_box_in_octree(&octree, &state->Objects[2]);
+#if 0
+    put_object_in_octree(&octree, &state->Objects[1]);
+    put_object_in_octree(&octree, &state->StaticObjects[0]);
+    octree_print(&octree.root);
+    put_bounding_box_in_octree(&octree, &state->Objects[2]);
+#endif
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
@@ -244,7 +265,15 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //Update camera
+            glm::vec3 old_position = state->Camera->physics->position;
             update_physics_object(state->Camera->physics, state->DeltaTimeS);
+#if 0
+            if(test_collision(&octree.root, state->Camera->physics->position)) {
+                state->Camera->physics->velocity = 0;
+                state->Camera->physics->fall_speed = 0;
+                state->Camera->physics->position = old_position;
+            }
+#endif
             //We're using quaternions for the camera which will lead
             //to the camera rolling around the Z axis. To get around this we choose
             //a point in front of the camera, rotate that point using a quaternion, and
@@ -258,7 +287,6 @@ int main() {
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
 
-#if 0
             //draw static objects
             for(int i = 0; i < state->StaticObjectCount; i++) {
                 //gl_draw_object(state->Camera, &state->StaticObjects[i]);
@@ -270,15 +298,9 @@ int main() {
                 //update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
-#endif
+
             //draw debug octree
-            glUseProgram(debug_cube.shader->id);
-            glBindVertexArray(debug_cube.vao);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-            octree_debug_draw(&octree, &octree.root, state->Camera, &debug_cube);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-            glBindVertexArray(0);
-            //state->IsRunning = false;
+            octree_debug_draw(&octree, state);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

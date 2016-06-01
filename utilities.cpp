@@ -8,6 +8,11 @@ void clamp(int* number, int min, int max) {
     if(*number < max) { *number = min; return; }
 }
 
+float debug_rand() {
+    int output = rand();
+    return (float)output/RAND_MAX;
+}
+
 glm::vec4 rgb_to_vector(uint8_t r, uint8_t g, uint8_t b) {
     return glm::vec4(r/255.f, g/255.f, b/255.f, 1.f);
 }
@@ -119,6 +124,7 @@ bool load_shaders(Object* object) {
 void load_physics(Physics_Object* physics) {
     physics->position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
+    physics->fall_speed = 0;
     physics->deceleration_factor = 26.5f;
     physics->quaternion = glm::quat();
     physics->angular_velocity = 0.f;

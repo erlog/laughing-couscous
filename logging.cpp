@@ -50,3 +50,8 @@ void message_log(const char* message, int number) {
 void message_log(const char* message, size_t number) {
     printf("%i: %s %.2f MB\n", SDL_GetTicks(), message, number/(1024.f*1024.f));
 }
+
+//MACROS
+#define DEBUG_LOG(VARIABLE) \
+do { message_log("Variable, " #VARIABLE "-", VARIABLE); } \
+while(0)
