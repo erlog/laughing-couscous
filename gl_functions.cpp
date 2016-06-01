@@ -21,6 +21,10 @@ inline glm::vec3 absolute_difference(glm::vec3 a, glm::vec3 b) {
     return result;
 }
 
+inline glm::vec3 mat4_multiply_vec3(glm::mat4 mat, glm::vec3 vec) {
+    return glm::vec3( mat * glm::vec4(vec, 1.0f));
+}
+
 inline GLfloat vector_min_component(glm::vec3 vector) {
     GLfloat output = vector.x;
     if(vector.y < output) { output = vector.y; }
@@ -150,8 +154,8 @@ void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
 
 inline glm::mat4 build_model_matrix(Object* object) {
     glm::mat4 model_matrix;
-    model_matrix = glm::translate(model_matrix, object->physics->position);
     model_matrix = glm::translate(model_matrix, object->model->local_position);
+    model_matrix = glm::translate(model_matrix, object->physics->position);
     model_matrix *= glm::mat4_cast(object->physics->quaternion);
     model_matrix *= glm::mat4_cast(object->model->local_quaternion);
     model_matrix = glm::scale(model_matrix, object->physics->scale);

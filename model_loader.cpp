@@ -50,18 +50,18 @@ bool load_model(const char* model_name, Model* model) {
     process_node(model, scene, scene->mRootNode->mChildren[0]);
 
     //Compute bounding box
-    glm::vec3 bounding_minimum = model->faces[0].a.v;
-    glm::vec3 bounding_maximum = model->faces[0].a.v;
+    glm::vec3 minimum = model->faces[0].a.v;
+    glm::vec3 maximum = model->faces[0].a.v;
     for(GLuint i = 0; i < model->face_count; i++) {
-        vector_set_if_lower(&model->faces[i].a.v, &bounding_minimum);
-        vector_set_if_higher(&model->faces[i].a.v, &bounding_maximum);
-        vector_set_if_lower(&model->faces[i].b.v, &bounding_minimum);
-        vector_set_if_higher(&model->faces[i].b.v, &bounding_maximum);
-        vector_set_if_lower(&model->faces[i].c.v, &bounding_minimum);
-        vector_set_if_higher(&model->faces[i].c.v, &bounding_maximum);
+        vector_set_if_lower(&model->faces[i].a.v, &minimum);
+        vector_set_if_higher(&model->faces[i].a.v, &maximum);
+        vector_set_if_lower(&model->faces[i].b.v, &minimum);
+        vector_set_if_higher(&model->faces[i].b.v, &maximum);
+        vector_set_if_lower(&model->faces[i].c.v, &minimum);
+        vector_set_if_higher(&model->faces[i].c.v, &maximum);
     }
-    model->bounding_minimum = bounding_minimum;
-    model->bounding_maximum = bounding_maximum;
+    model->bounding_minimum = minimum;
+    model->bounding_maximum = maximum;
 
-   return true;
+    return true;
 }

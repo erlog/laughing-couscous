@@ -124,6 +124,7 @@ bool load_shaders(Object* object) {
 void load_physics(Physics_Object* physics) {
     physics->position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
+    physics->fall_speed = 0;
     physics->deceleration_factor = 26.5f;
     physics->quaternion = glm::quat();
     physics->angular_velocity = 0.f;

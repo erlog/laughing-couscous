@@ -67,6 +67,8 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
         object->velocity = 0;
     }
 
+    //object->fall_speed += 9.81 * delta_time_s;
+    //object->position.y -= object->fall_speed * delta_time_s;
     return;
 }
 
@@ -154,7 +156,7 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->physics->position = glm::vec3(0.f, 1.4f, 3.f);
+    state->Camera->physics->position = glm::vec3(0.f, 1.7f, 3.f);
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -176,16 +178,16 @@ int main() {
 
     load_object(&state->Objects[0], "cube", "blank", "blank_nm",
         "blank_spec", "flat");
-    state->Objects[0].physics->position = glm::vec3(0.f, 1.f, 0.f);
+    state->Objects[0].physics->position = glm::vec3(-10.5f, 0.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
     state->Objects[0].light_direction = light_direction;
-    state->Objects[0].model->local_scale = glm::vec3(0.5f, 0.5f, 0.5f);
+    state->Objects[0].model->local_scale = glm::vec3(1.f, 1.f, 1.f);
     state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[1].model->local_position = glm::vec3(0.f, 0.5f, 0.f);
-    state->Objects[1].physics->position = glm::vec3(5.0f, 0.f, 0.f);
+    state->Objects[1].model->local_position = glm::vec3(0.0f, 0.0f, 0.f);
+    state->Objects[1].physics->position = glm::vec3(15.0f, 0.0f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[1].light_direction = light_direction;
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
@@ -193,7 +195,7 @@ int main() {
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[2].physics->position = glm::vec3(-16.5f, -16.5f, -16.5f);
+    state->Objects[2].physics->position = glm::vec3(-15.5f, 0.f, 0.f);
     state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
     state->Objects[2].light_direction = light_direction;
     state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
@@ -208,11 +210,14 @@ int main() {
 
     Octree octree;
     octree_from_object(&octree, &state->StaticObjects[0]);
-    put_object_in_octree(&octree, &state->Objects[1]);
-#if 0
-    put_bounding_box_in_octree(&octree, &state->Objects[2]);
-    put_object_in_octree(&octree, &state->StaticObjects[0]);
     put_bounding_box_in_octree(&octree, &state->Objects[0]);
+    put_bounding_box_in_octree(&octree, &state->Objects[1]);
+    put_bounding_box_in_octree(&octree, &state->Objects[2]);
+#if 0
+    put_object_in_octree(&octree, &state->Objects[1]);
+    put_object_in_octree(&octree, &state->StaticObjects[0]);
+    octree_print(&octree.root);
+    put_bounding_box_in_octree(&octree, &state->Objects[2]);
 #endif
 
     Object* object;
@@ -254,14 +259,21 @@ int main() {
         process_keyboard(state, SDL_KeyState);
         //TODO: is there a better way to control our framerate?
         if( state->DeltaTimeMS > 30 ) {
-            state->DeltaTimeMS = 30;
             process_mouse(state);
 
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //Update camera
+            glm::vec3 old_position = state->Camera->physics->position;
             update_physics_object(state->Camera->physics, state->DeltaTimeS);
+#if 0
+            if(test_collision(&octree.root, state->Camera->physics->position)) {
+                state->Camera->physics->velocity = 0;
+                state->Camera->physics->fall_speed = 0;
+                state->Camera->physics->position = old_position;
+            }
+#endif
             //We're using quaternions for the camera which will lead
             //to the camera rolling around the Z axis. To get around this we choose
             //a point in front of the camera, rotate that point using a quaternion, and

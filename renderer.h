@@ -55,6 +55,7 @@ typedef struct shader {
 typedef struct c_physics_object {
     glm::vec3 position; //where in world-space something is in meters
     GLfloat velocity;   //how fast something is moving in meters/sec
+    GLfloat fall_speed;
     GLfloat deceleration_factor;
     glm::quat quaternion; //orientation
     GLfloat angular_velocity;   //how fast something is rotating in deg/sec
@@ -119,8 +120,7 @@ typedef struct c_memory {
 } Memory_Info;
 
 typedef struct c_octree_node {
-    uint8_t filled_children;
-    bool has_children;
+    uint32_t filled;
     uint8_t depth;
     GLfloat radius;
     glm::vec3 position;
