@@ -1,137 +1,11 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-//Structs
-typedef struct c_texture {
-    char* asset_path;
-    GLuint id;  //ID assigned to us by OpenGL
-    GLsizei width;
-    GLsizei height;
-    int bytes_per_pixel;
-    int pitch;  //width in bytes of each row of the image
-    int buffer_size;
-    uint8_t* buffer;
-} Texture;
+//#define MAC_COMPILE 0
+//#define LINUX_COMPILE 1
 
-typedef struct c_face_indices {
-    //Struct to store vertex indices in order to average tangent/bitangent
-    //after the fact
-    int a_v_index; int a_n_index; int a_uv_index;
-    int b_v_index; int b_n_index; int b_uv_index;
-    int c_v_index; int c_n_index; int c_uv_index;
-} Indexed_Face;
-
-typedef struct c_vertex {
-    glm::vec3 v;    //Vertex
-    glm::vec3 uv;   //Texture Coordinate (vec3 for the W coord)
-    glm::vec3 n;    //Normal Vector
-    glm::vec3 t;    //Tangent Vector
-    glm::vec3 b;    //Bitangent Vector
-} Vertex;
-
-typedef struct c_face {
-    Vertex a;
-    Vertex b;
-    Vertex c;
-} Face;
-
-typedef struct c_model {
-    char* asset_path;
-    GLuint face_count;
-    Face* faces;
-    glm::vec4 color;
-    glm::vec3 bounding_minimum;
-    glm::vec3 bounding_maximum;
-    glm::vec3 local_position; //local position offset
-    glm::vec3 local_scale; //local scale of the model
-    glm::quat local_quaternion; //local orientation of the model
-} Model;
-
-typedef struct shader {
-    char* name;
-    GLuint id; //ID assigned to the shader program by OpenGL
-} Shader;
-
-typedef struct c_physics_object {
-    glm::vec3 position; //where in world-space something is in meters
-    GLfloat velocity;   //how fast something is moving in meters/sec
-    GLfloat fall_speed;
-    GLfloat deceleration_factor;
-    glm::quat quaternion; //orientation
-    GLfloat angular_velocity;   //how fast something is rotating in deg/sec
-    glm::vec3 rotation_vector;   //the axis of rotation
-    glm::vec3 movement_vector;  //the axis of movement
-    glm::vec3 scale; //world scale of the object
-} Physics_Object;
-
-typedef struct c_object {
-    Model* model;
-    Texture* texture;
-    Texture* normal_map;
-    Texture* specular_map;
-    Shader* shader;
-    Physics_Object* physics;
-    glm::vec3 light_direction;
-    GLuint vbo; //index of the Vertex Buffer object in OpenGL
-    GLuint vao; //index of the Vertex Array object in OpenGL
-} Object;
-
-typedef struct c_camera {
-    Physics_Object* physics;
-    glm::mat4 projection;
-    glm::mat4 view;
-    glm::vec3 direction;
-} Scene_Camera;
-
-typedef struct c_settings {
-    uint32_t horizontal_resolution;
-    uint32_t vertical_resolution;
-    bool vsync;
-    bool fullscreen;
-} Settings_Object;
-
-typedef struct c_state {
-    bool IsRunning;
-    bool IsPaused;
-    Settings_Object Settings;
-    Texture* Screen;
-    //Timers
-    uint32_t WallTime; //in wall time
-    uint32_t PauseStartTime; //in wall time
-    uint32_t TimeDifference; //difference between wall time and game time
-    uint32_t GameTime; //in game time
-    uint32_t LastUpdateTime; //in game time
-    uint32_t DeltaTimeMS; //in game time
-    float DeltaTimeS; //in game time
-    uint32_t FrameCounter;
-    uint32_t LastFPSUpdateTime;
-    Object* Debug_Cube;
-    Object* Objects;
-    int ObjectCount;
-    Object* StaticObjects;
-    int StaticObjectCount;
-    Scene_Camera* Camera;
-    SDL_Window* Window;
-} State;
-
-typedef struct c_memory {
-    size_t MemoryAllocated;
-    size_t MemoryFreed;
-} Memory_Info;
-
-typedef struct c_octree_node {
-    uint32_t filled;
-    uint8_t depth;
-    GLfloat radius;
-    glm::vec3 position;
-    c_octree_node* parent;
-    c_octree_node* children;
-} Octree_Node;
-
-typedef struct c_octree {
-    uint32_t max_depth;
-    c_octree_node root;
-} Octree;
+//Namespaces
+using namespace std;
 
 //Globals
 const char* AssetFolderPath = "objects";
@@ -150,6 +24,12 @@ char* construct_asset_path(const char* folder, const char* filename,
 #if LINUX_COMPILE
     #include <malloc.h>
 #endif
+//Memory Manager
+typedef struct c_memory {
+    size_t MemoryAllocated;
+    size_t MemoryFreed;
+} Memory_Info;
+
 Memory_Info* Global_State; //use this only for debug
 void* wrapped_alloc(size_t size) {
     void* pointer = malloc(size);
@@ -198,12 +78,56 @@ void wrapped_free(void* pointer) {
     free(pointer); return;
 }
 
-void* (*walloc)(size_t size) = wrapped_alloc;
-void* (*wrealloc)(void* pointer, size_t new_size) = wrapped_realloc;
-void (*wfree)(void* pointer) = wrapped_free;
-//void* (*walloc)(size_t size) = malloc;
-//void* (*wrealloc)(void* pointer, size_t new_size) = realloc;
-//void (*wfree)(void* pointer) = free;
-
+#if 1 //Logging for memory
+    #define walloc wrapped_alloc
+    #define wrealloc wrapped_realloc
+    #define wfree wrapped_free
 #endif
 
+#if 0 //No logging for memory
+    #define walloc malloc
+    #define wrealloc realloc
+    #define wfree free
+#endif
+
+//C Standard Library
+#include <time.h>
+#include <float.h>
+#include <math.h>
+#include <stdarg.h>
+//C++ Stuff
+
+//Other Libraries
+#include <GL/glew.h>
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <SDL.h>
+#include <SDL_opengl.h>
+#if MAC_COMPILE
+    #include <SDL_opengl_glext.h>
+#endif
+#if LINUX_COMPILE
+    #include <GL/glext.h>
+#endif
+#include <ruby.h>
+//Local Includes
+#include "lodepng.hpp"
+#include "structs.cpp"
+#include "logging.cpp"
+#include "utilities.cpp"
+#include "ini_handling.cpp"
+#include "gl_functions.cpp"
+#include "octree.cpp"
+#include "loader_model.cpp"
+#include "loaders.cpp"
+#include "hid_input.cpp"
+//#include "ruby_functions.cpp"
+
+#endif

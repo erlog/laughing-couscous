@@ -52,6 +52,7 @@ void main() {
 
     float intensity = 0.05 + 0.45*reflectivity + 0.6*diffuse_intensity;
     color = texture(diffuse, texture_coordinate) * intensity;
+    color = texture(diffuse, texture_coordinate);
     color.a = 1.0;
     fragColor = color;
 }
