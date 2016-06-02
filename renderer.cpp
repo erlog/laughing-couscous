@@ -1,47 +1,4 @@
-//#define MAC_COMPILE 0
-//#define LINUX_COMPILE 1
-
-//C Standard Library
-#include <time.h>
-#include <float.h>
-#include <math.h>
-#include <stdarg.h>
-//C++ Stuff
-
-//Other Libraries
-#include <GL/glew.h>
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <SDL.h>
-#include <SDL_opengl.h>
-#if MAC_COMPILE
-    #include <SDL_opengl_glext.h>
-#endif
-#if LINUX_COMPILE
-    #include <GL/glext.h>
-#endif
-#include <ruby.h>
-//Namespaces
-using namespace std;
-//Local Headers
 #include "renderer.h"
-//Local Includes
-#include "lodepng.hpp"
-#include "free_structs.cpp"
-#include "logging.cpp"
-#include "ini_handling.cpp"
-#include "gl_functions.cpp"
-#include "model_loader.cpp"
-#include "utilities.cpp"
-#include "hid_input.cpp"
-#include "octree.cpp"
-//#include "ruby_functions.cpp"
 
 void update_physics_object(Physics_Object* object, float delta_time_s) {
     //rotate
@@ -187,7 +144,7 @@ int main() {
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
     state->Objects[1].model->local_position = glm::vec3(0.0f, 0.0f, 0.f);
-    state->Objects[1].physics->position = glm::vec3(15.0f, 0.0f, 0.f);
+    state->Objects[1].physics->position = glm::vec3(10.5f, 0.0f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[1].light_direction = light_direction;
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
@@ -200,25 +157,9 @@ int main() {
     state->Objects[2].light_direction = light_direction;
     state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
 
-    state->StaticObjectCount = 1;
-    state->StaticObjects = (Object*)walloc(sizeof(Object)*state->StaticObjectCount);
-    load_object(&state->StaticObjects[0], "test_level",
-        "blank", "blank_nm", "blank_spec", "flat_shaded");
-    state->StaticObjects[0].physics->position = glm::vec3(0.f, 0.f, 0.f);
-    state->StaticObjects[0].light_direction = light_direction;
-    state->StaticObjects[0].model->color = rgb_to_vector(0x13, 0x88, 0x88);
-
-    Octree octree;
-    octree_from_object(&octree, &state->StaticObjects[0]);
-    put_bounding_box_in_octree(&octree, &state->Objects[0]);
-    put_bounding_box_in_octree(&octree, &state->Objects[1]);
-    put_bounding_box_in_octree(&octree, &state->Objects[2]);
-#if 0
-    put_object_in_octree(&octree, &state->Objects[1]);
-    put_object_in_octree(&octree, &state->StaticObjects[0]);
-    octree_print(&octree.root);
-    put_bounding_box_in_octree(&octree, &state->Objects[2]);
-#endif
+    Level level;
+    load_level(&level, "test_level");
+    octree_print(&level.octree->root);
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
@@ -287,10 +228,6 @@ int main() {
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
 
-            //draw static objects
-            for(int i = 0; i < state->StaticObjectCount; i++) {
-                //gl_draw_object(state->Camera, &state->StaticObjects[i]);
-            }
 
             //draw dynamic objects
             for(int i = 0; i < state->ObjectCount; i++) {
@@ -299,8 +236,9 @@ int main() {
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
 
-            //draw debug octree
-            octree_debug_draw(&octree, state);
+            //draw level
+            gl_draw_object(state->Camera, level.geometry);
+            octree_debug_draw(level.octree, state);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;
