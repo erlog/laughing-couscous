@@ -2,7 +2,7 @@
 add real lighting
     status: read all of Carmack's .plan files
 come up with a level format
-    status: thought about it
+    status: began implementing octree-based geometry indexing, slow going
 decide on a proper string format
     status: not started
 generalize key input for later rebinding
@@ -11,4 +11,5 @@ alt-tab support
     status: investigated and found nothing, ALT-TAB keystrokes are being
             eaten while I have mouse focus
 learn to use Blender
-    status: ongoing
+    status: made a hairdryer and a textured test level, working on grey-boxing
+            with only the collision volumes

@@ -43,6 +43,9 @@ typedef struct c_quad_face {
     Vertex b;
     Vertex c;
     Vertex d;
+    glm::vec3 center;
+    glm::vec3 radii;
+    glm::vec3 normal;
 } QuadFace;
 
 typedef struct c_model {
@@ -125,6 +128,30 @@ void wfree_camera(Scene_Camera* object) {
     wfree(object->physics);
 }
 
+//Levels
+typedef struct c_octree_node {
+    uint32_t filled;
+    uint8_t depth;
+    GLfloat hard_radius;
+    GLfloat soft_radius;
+    QuadFace** faces;
+    uint32_t face_count;
+    glm::vec3 position;
+    c_octree_node* parent;
+    c_octree_node* children;
+} Octree_Node;
+
+typedef struct c_octree {
+    uint32_t max_depth;
+    c_octree_node root;
+} Octree;
+
+typedef struct c_level {
+    char* asset_path;
+    Object* geometry;
+    QuadModel* collision_model;
+    Octree* octree;
+} Game_Level;
 
 //Game State
 typedef struct c_settings {
@@ -152,7 +179,7 @@ typedef struct c_state {
     Object* Debug_Cube;
     Object* Objects;
     int ObjectCount;
-    Object* StaticObjects;
+    Game_Level* Level;
     int StaticObjectCount;
     Scene_Camera* Camera;
     SDL_Window* Window;
@@ -164,34 +191,8 @@ void wfree_state(State* object) {
         wfree_object(&object->Objects[i]);
     }
     wfree(object->Objects);
-    for(int i = 0; i < object->StaticObjectCount; i++) {
-        wfree_object(&object->StaticObjects[i]);
-    }
-    wfree(object->StaticObjects);
     wfree_camera(object->Camera);
     wfree(object->Camera);
     return;
 }
 
-//Levels
-typedef struct c_octree_node {
-    uint32_t filled;
-    uint8_t depth;
-    GLfloat hard_radius;
-    GLfloat soft_radius;
-    glm::vec3 position;
-    c_octree_node* parent;
-    c_octree_node* children;
-} Octree_Node;
-
-typedef struct c_octree {
-    uint32_t max_depth;
-    c_octree_node root;
-} Octree;
-
-typedef struct c_level {
-    char* asset_path;
-    Object* geometry;
-    QuadModel* collision_model;
-    Octree* octree;
-} Level;

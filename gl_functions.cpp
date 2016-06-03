@@ -21,6 +21,13 @@ inline glm::vec3 absolute_difference(glm::vec3 a, glm::vec3 b) {
     return result;
 }
 
+inline glm::vec3 floor_vector(glm::vec3 vec, GLfloat min) {
+    if(vec.x < min) { vec.x = min; }
+    if(vec.y < min) { vec.y = min; }
+    if(vec.z < min) { vec.z = min; }
+    return vec;
+}
+
 inline glm::vec3 mat4_multiply_vec3(glm::mat4 mat, glm::vec3 vec) {
     return glm::vec3( mat * glm::vec4(vec, 1.0f));
 }
@@ -108,29 +115,6 @@ void gl_bind_texture(GLuint shader, Texture* texture, GLuint slot,
         glBindTexture(GL_TEXTURE_2D, texture->id);
     }
     return;
-}
-
-void gl_draw_debug_grid_lines() {
-    //TODO: convert this to a real VAO
-    glUseProgram(0);
-    glBegin(GL_LINES);
-    glColor3f(1.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(10.0, 0.0, 0.0);
-    glColor3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 10.0, 0.0);
-    glColor3f(0.0, 0.0, 1.0);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(0.0, 0.0, -10.0);
-    glEnd();
-
-    glBegin(GL_POINTS);
-    glColor3f(1.0, 1.0, 1.0);
-    glVertex3f(1.0, 0.0, 0.0);
-    glVertex3f(0.0, 1.0, 0.0);
-    glVertex3f(0.0, 0.0, -1.0);
-    glEnd();
 }
 
 void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,

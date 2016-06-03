@@ -24,8 +24,8 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
         object->velocity = 0;
     }
 
-    //object->fall_speed += 9.81 * delta_time_s;
-    //object->position.y -= object->fall_speed * delta_time_s;
+    object->fall_speed += 9.81 * delta_time_s;
+    object->position.y -= object->fall_speed * delta_time_s;
     return;
 }
 
@@ -157,9 +157,9 @@ int main() {
     state->Objects[2].light_direction = light_direction;
     state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
 
-    Level level;
-    load_level(&level, "test_level");
-    octree_print(&level.octree->root);
+    state->Level = (Game_Level*)walloc(sizeof(Game_Level));
+    load_level(state->Level, "test_level");
+    octree_print(&state->Level->octree->root);
 
     Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
@@ -208,13 +208,13 @@ int main() {
             //Update camera
             glm::vec3 old_position = state->Camera->physics->position;
             update_physics_object(state->Camera->physics, state->DeltaTimeS);
-#if 0
-            if(test_collision(&octree.root, state->Camera->physics->position)) {
-                state->Camera->physics->velocity = 0;
-                state->Camera->physics->fall_speed = 0;
-                state->Camera->physics->position = old_position;
-            }
-#endif
+
+            glUseProgram(state->Debug_Cube->shader->id);
+            glBindVertexArray(state->Debug_Cube->vao);
+
+            process_collision(state, &state->Level->octree->root, old_position,
+                state->Camera->physics);
+
             //We're using quaternions for the camera which will lead
             //to the camera rolling around the Z axis. To get around this we choose
             //a point in front of the camera, rotate that point using a quaternion, and
@@ -237,8 +237,8 @@ int main() {
             }
 
             //draw level
-            gl_draw_object(state->Camera, level.geometry);
-            octree_debug_draw(level.octree, state);
+            gl_draw_object(state->Camera, state->Level->geometry);
+            octree_debug_draw(state->Level->octree, state);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

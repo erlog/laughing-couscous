@@ -42,12 +42,26 @@ void process_quad_node(QuadModel* model, const aiScene* scene, aiNode* node) {
     model->face_count = mesh->mNumFaces;
     model->faces = (QuadFace*)walloc(sizeof(QuadFace)*model->face_count);
 
+    glm::vec3 minimum; glm::vec3 maximum; glm::vec3 radii;
     for(GLuint i = 0; i < model->face_count; i++) {
         QuadFace face;
         face.a = process_vertex(mesh, mesh->mFaces[i].mIndices[0]);
         face.b = process_vertex(mesh, mesh->mFaces[i].mIndices[1]);
         face.c = process_vertex(mesh, mesh->mFaces[i].mIndices[2]);
         face.d = process_vertex(mesh, mesh->mFaces[i].mIndices[3]);
+        face.center = (0.25f * face.a.v) + (0.25f * face.b.v) +
+            (0.25f * face.c.v) + (0.25f * face.d.v);
+        face.normal = (0.25f * face.a.n) + (0.25f * face.b.n) +
+            (0.25f * face.c.n) + (0.25f * face.d.n);
+
+        minimum = face.a.v; maximum = face.a.v;
+        vector_set_if_lower(&face.a.v, &minimum); vector_set_if_lower(&face.b.v, &minimum);
+        vector_set_if_lower(&face.c.v, &minimum); vector_set_if_lower(&face.d.v, &minimum);
+        vector_set_if_higher(&face.a.v, &maximum); vector_set_if_higher(&face.b.v, &maximum);
+        vector_set_if_higher(&face.c.v, &maximum); vector_set_if_higher(&face.d.v, &maximum);
+
+        face.radii = absolute_difference(maximum, minimum)/2.0f;
+        face.radii = floor_vector(face.radii, 0.2f); //TODO: find a good minimum
         model->faces[i] = face;
     }
 
