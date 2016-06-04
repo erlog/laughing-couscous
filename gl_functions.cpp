@@ -15,9 +15,9 @@ inline GLfloat distance_squared(glm::vec3 a, glm::vec3 b) {
 
 inline glm::vec3 absolute_difference(glm::vec3 a, glm::vec3 b) {
     glm::vec3 result;
-    result.x = abs(a.x - b.x);
-    result.y = abs(a.y - b.y);
-    result.z = abs(a.z - b.z);
+    result.x = fabs(a.x - b.x);
+    result.y = fabs(a.y - b.y);
+    result.z = fabs(a.z - b.z);
     return result;
 }
 

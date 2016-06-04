@@ -1,11 +1,19 @@
 #ifndef RENDERER_H
 #define RENDERER_H
+//C Standard Library
+#include <stdlib.h>
+#include <time.h>
+#include <float.h>
+#include <math.h>
+#include <stdarg.h>
 
 //#define MAC_COMPILE 0
 //#define LINUX_COMPILE 1
 
 //Namespaces
-using namespace std;
+//using namespace std;
+
+//C++ Stuff
 
 //Globals
 const char* AssetFolderPath = "objects";
@@ -89,13 +97,6 @@ void wrapped_free(void* pointer) {
     #define wrealloc realloc
     #define wfree free
 #endif
-
-//C Standard Library
-#include <time.h>
-#include <float.h>
-#include <math.h>
-#include <stdarg.h>
-//C++ Stuff
 
 //Other Libraries
 #include <GL/glew.h>
