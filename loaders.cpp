@@ -64,10 +64,7 @@ bool load_shaders(Object* object) {
 
 void reload_shaders(State* state) {
     message_log("Reloading shaders");
-    for(int i = 0; i < state->StaticObjectCount; i++) {
-        load_shaders(&state->StaticObjects[i]);
-    }
-
+    //TODO: reload level shaders
     for(int i = 0; i < state->ObjectCount; i++) {
         load_shaders(&state->Objects[i]);
     }
@@ -143,22 +140,13 @@ bool load_object(Object* object, const char* model_name,
 }
 
 //Levels
-bool load_level(Level* level, const char* level_name) {
+bool load_level(Game_Level* level, const char* level_name) {
     level->geometry = (Object*)walloc(sizeof(Object));
     load_object(level->geometry, level_name,
         "checkerboard", "blank_nm_1024", "checkerboard_spec", "shader");
     level->geometry->model->color = rgb_to_vector(0x13, 0x88, 0x88);
     level->collision_model = (QuadModel*)walloc(sizeof(QuadModel));
     load_quad_mesh(level->collision_model, level_name);
-    octree_from_level(level); //TODO: this is gross
-#if 0
-    put_bounding_box_in_octree(&octree, &state->Objects[0]);
-    put_bounding_box_in_octree(&octree, &state->Objects[1]);
-    put_bounding_box_in_octree(&octree, &state->Objects[2]);
-    octree_print(&octree.root);
-    put_object_in_octree(&octree, &state->StaticObjects[0]);
-    put_object_in_octree(&octree, &state->Objects[1]);
-    put_bounding_box_in_octree(&octree, &state->Objects[2]);
-#endif
+    octree_from_level(level);
     return true;
 }

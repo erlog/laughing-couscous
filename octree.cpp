@@ -32,15 +32,42 @@ inline Octree_Node* child_from_position(Octree_Node* node, glm::vec3 position) {
     return &node->children[child_index];
 }
 
-bool test_collision(Octree_Node* node, glm::vec3 position) {
-    if(node->filled) { return true; }
+void process_collision(State* state, Octree_Node* node, glm::vec3 old_position,
+    Physics_Object* physics) {
+    bool collided = false;
 
-    if(node->children != NULL) {
-        return test_collision(child_from_position(node, position), position);
+    QuadFace* face;
+    glm::vec3 distance;
+    for(unsigned int i = 0; i < state->Level->collision_model->face_count; i++) {
+        face = &state->Level->collision_model->faces[i];
+        distance = absolute_difference(physics->position, face->center);
+
+        if( (distance.x < face->radii.x)
+            & (distance.y < (2.8 + face->radii.y))
+            & (distance.z < face->radii.z) ) {
+            collided = true;
+        }
+        if( collided  & (face->normal.x != 0) ) {
+            physics->position.x = old_position.x;
+        }
+        if( collided & (face->normal.y != 0) ) {
+            physics->position.y = old_position.y;
+        }
+        if( collided & (face->normal.z != 0) ) {
+            physics->position.z = old_position.z;
+        }
+
+        if(collided) {
+            gl_fast_draw_vao(state->Camera, state->Debug_Cube, face->center,
+                glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
+            physics->fall_speed = 0;
+            physics->velocity = 0;
+            return;
+        }
     }
-
-    return false;
+    return;
 }
+
 
 inline void initialize_octree_node_children(Octree_Node* node) {
     if(node->children == NULL) {
@@ -54,6 +81,8 @@ inline void initialize_octree_node_children(Octree_Node* node) {
         node->children[i].depth = child_depth;
         node->children[i].children = NULL;
         node->children[i].filled = 0;
+        node->children[i].faces = (QuadFace**)walloc(sizeof(QuadFace*)*32);
+        node->children[i].face_count = 0;
         node->children[i].hard_radius = child_radius;
         node->children[i].soft_radius = child_radius;
         node->children[i].position = calculate_child_position(node, i);
@@ -101,7 +130,25 @@ void put_bounding_box_in_octree(Octree* octree, Object* object) {
     return;
 }
 
-void octree_from_level(Level* level) {
+inline void put_face_in_node(Octree_Node* node, QuadFace* face) {
+    //Check if there's room to store the face
+    if(node->face_count < 32) {
+        //Make sure the face isn't already in the list
+        for(unsigned int i = 0; i < node->face_count; i++) {
+            if(node->faces[i] == face) {
+                return; //bail if the face is already in the list
+            }
+        }
+        //Store the face
+        node->faces[node->face_count] = face;
+        node->face_count++;
+    } else {
+        message_log("Node already at maximum face capacity");
+    }
+    return;
+}
+
+void octree_from_level(Game_Level* level) {
     //Find the size of our root node
     QuadModel* model = level->collision_model;
     glm::vec3 model_size = absolute_difference(
@@ -117,26 +164,24 @@ void octree_from_level(Level* level) {
     octree->root.depth = 0;
     octree->root.hard_radius = largest_radius;
     octree->root.soft_radius = largest_radius;
+    octree->root.faces = (QuadFace**)walloc(sizeof(QuadFace*)*32);
+    octree->root.face_count = 0;
     octree->root.position = glm::vec3(0.0f, 0.0f, 0.0f);
     octree->root.filled = 0;
     octree->root.children = NULL;
 
     Face* face;
     glm::mat4 model_matrix = build_model_matrix(level->geometry);
-
     glm::vec3 face_center; GLfloat radius;
-    glm::vec3 a; glm::vec3 b; glm::vec3 c; glm::vec3 d;
 
+    Octree_Node* node;
+    //TODO: put faces in more than one node, if they need to be split
     for(GLuint i = 0; i < model->face_count; i++) {
-        //Project face into world space;
-        a = mat4_multiply_vec3(model_matrix, model->faces[i].a.v);
-        b = mat4_multiply_vec3(model_matrix, model->faces[i].b.v);
-        c = mat4_multiply_vec3(model_matrix, model->faces[i].c.v);
-        d = mat4_multiply_vec3(model_matrix, model->faces[i].d.v);
-        face_center = (a * 0.25f) + (b * 0.25f) + (c * 0.25f) + (d * 0.25f);
-
-        radius = glm::distance(face_center, a);
-        find_appropriate_node(octree, face_center, radius)->filled += 1;
+        face_center = mat4_multiply_vec3(model_matrix, model->faces[i].center);
+        radius = vector_max_component(model->faces[i].radii);
+        node = find_appropriate_node(octree, face_center, radius*2);
+        put_face_in_node(node, &model->faces[i]);
+        find_appropriate_node(octree, face_center, 0.1f)->filled += 1;
     }
     return;
 }
@@ -144,15 +189,20 @@ void octree_from_level(Level* level) {
 void octree_debug_draw_node(Octree_Node* node, Scene_Camera* camera,
     Object* marker) {
 
+    //Draw a bounding box around the whole octree
     if( node->depth == 0 ) {
         gl_fast_draw_vao(camera, marker, node->position,
-            glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), node->soft_radius*2.0f*0.99f);
+            glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), node->hard_radius*2.0f*0.99f);
     }
 
-    if( (node->depth > 0) & (node->filled > 0) ) {
-        glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    //Draw a bounding box for nodes that have faces attached to them
+    if((node->face_count > 0) | (node->filled) ) {
+        GLfloat amount = 1.0f;
+        glm::vec4 color = glm::vec4(0.0f, amount, 0.0f, amount);
         gl_fast_draw_vao(camera, marker, node->position, color, node->hard_radius*2.0f);
     }
+
+    //Recurse children
     if(node->children != NULL) { for(int i = 0; i < 8; i++) {
             octree_debug_draw_node(&node->children[i], camera, marker);
     } }
@@ -167,12 +217,12 @@ void octree_debug_draw(Octree* octree, State* state) {
 }
 
 void octree_print(Octree_Node* node) {
-    if(node->filled > 3) {
+    if(node->face_count > 2) {
         message_log("Node Position-", node->position);
         message_log("  Radius", node->hard_radius);
         message_log("  Soft Radius", node->soft_radius);
-        //message_log("  Depth-", node->depth);
-        message_log("  Filled-", node->filled);
+        message_log("  Depth-", node->depth);
+        message_log("  Face Count-", node->face_count);
     }
     if(node->children != NULL) {
         for(int i = 0; i < 8; i++) { octree_print(&node->children[i]); }

@@ -5,20 +5,20 @@ void process_keyboard(State* state, const uint8_t* keystate) {
     }
     if(keystate[SDL_SCANCODE_W]) {
         state->Camera->physics->movement_vector.z = -1.f;
-        state->Camera->physics->velocity = 18.50f;
+        state->Camera->physics->velocity = 9.50f;
     }
     else if(keystate[SDL_SCANCODE_S]) {
         state->Camera->physics->movement_vector.z = 1.f;
-        state->Camera->physics->velocity = 18.50f;
+        state->Camera->physics->velocity = 9.50f;
     }
 
     if(keystate[SDL_SCANCODE_A]) {
         state->Camera->physics->movement_vector.x = -1.f;
-        state->Camera->physics->velocity = 18.50f;
+        state->Camera->physics->velocity = 9.50f;
     }
     else if(keystate[SDL_SCANCODE_D]) {
         state->Camera->physics->movement_vector.x = 1.f;
-        state->Camera->physics->velocity = 18.50f;
+        state->Camera->physics->velocity = 9.50f;
     }
 
     if(keystate[SDL_SCANCODE_SPACE]) {
