@@ -6,24 +6,18 @@
 #include <float.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 //#define MAC_COMPILE 0
 //#define LINUX_COMPILE 1
 
 //Namespaces
-//using namespace std;
-
-//C++ Stuff
+//using namespace std
 
 //Globals
 const char* AssetFolderPath = "objects";
 const char* OutputFolderPath = "new_output";
 const char* SettingsINIPath = "settings.ini";
-
-//Generic utility functions
-//TODO: re-arrange source to not require any functions here
-char* construct_asset_path(const char* folder, const char* filename,
-        const char* file_extension);
 
 //Debug Functions
 #if MAC_COMPILE
@@ -89,10 +83,10 @@ void wrapped_free(void* pointer) {
 #if 1 //Logging for memory
     #define walloc wrapped_alloc
     #define wrealloc wrapped_realloc
-    #define wfree wrapped_free
-#endif
-
-#if 0 //No logging for memory
+    #define wfree(VARIABLE) \
+    do { puts("---"); } \
+    while(0)
+#else
     #define walloc malloc
     #define wrealloc realloc
     #define wfree free

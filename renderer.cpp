@@ -24,8 +24,8 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
         object->velocity = 0;
     }
 
-    object->fall_speed += 9.81 * delta_time_s;
-    object->position.y -= object->fall_speed * delta_time_s;
+    //object->fall_speed += 9.81 * delta_time_s;
+    //object->position.y -= object->fall_speed * delta_time_s;
     return;
 }
 
@@ -238,7 +238,7 @@ int main() {
 
             //draw level
             gl_draw_object(state->Camera, state->Level->geometry);
-            octree_debug_draw(state->Level->octree, state);
+            //octree_debug_draw(state->Level->octree, state);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

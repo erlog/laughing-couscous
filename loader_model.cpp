@@ -61,7 +61,6 @@ void process_quad_node(QuadModel* model, const aiScene* scene, aiNode* node) {
         vector_set_if_higher(&face.c.v, &maximum); vector_set_if_higher(&face.d.v, &maximum);
 
         face.radii = absolute_difference(maximum, minimum)/2.0f;
-        face.radii = floor_vector(face.radii, 0.2f); //TODO: find a good minimum
         model->faces[i] = face;
     }
 

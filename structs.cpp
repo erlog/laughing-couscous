@@ -16,14 +16,6 @@ void wfree_texture(Texture* object) {
 }
 
 //3D Model
-typedef struct c_face_indices {
-    //Struct to store vertex indices in order to average tangent/bitangent
-    //after the fact
-    int a_v_index; int a_n_index; int a_uv_index;
-    int b_v_index; int b_n_index; int b_uv_index;
-    int c_v_index; int c_n_index; int c_uv_index;
-} Indexed_Face;
-
 typedef struct c_vertex {
     glm::vec3 v;    //Vertex
     glm::vec3 uv;   //Texture Coordinate (vec3 for the W coord)
@@ -33,16 +25,11 @@ typedef struct c_vertex {
 } Vertex;
 
 typedef struct c_face {
-    Vertex a;
-    Vertex b;
-    Vertex c;
+    Vertex a; Vertex b; Vertex c;
 } Face;
 
 typedef struct c_quad_face {
-    Vertex a;
-    Vertex b;
-    Vertex c;
-    Vertex d;
+    Vertex a; Vertex b; Vertex c; Vertex d;
     glm::vec3 center;
     glm::vec3 radii;
     glm::vec3 normal;
@@ -60,6 +47,12 @@ typedef struct c_model {
     glm::quat local_quaternion; //local orientation of the model
 } Model;
 
+void wfree_model(Model* object) {
+    wfree(object->asset_path);
+    wfree(object->faces);
+    return;
+}
+
 typedef struct c_quad_model {
     char* asset_path;
     GLuint face_count;
@@ -68,9 +61,10 @@ typedef struct c_quad_model {
     glm::vec3 bounding_maximum;
 } QuadModel;
 
-void wfree_model(Model* object) {
+void wfree_quadmodel(QuadModel* object) {
     wfree(object->asset_path);
-    wfree(object->faces); return;
+    wfree(object->faces);
+    return;
 }
 
 typedef struct shader {
@@ -126,6 +120,7 @@ typedef struct c_camera {
 
 void wfree_camera(Scene_Camera* object) {
     wfree(object->physics);
+    return;
 }
 
 //Levels
@@ -141,10 +136,27 @@ typedef struct c_octree_node {
     c_octree_node* children;
 } Octree_Node;
 
+void wfree_octree_node(Octree_Node* object) {
+    if(object->children != NULL) {
+        for(int i = 0; i < 8; i++) {
+            wfree_octree_node(&object->children[i]);
+        }
+    }
+
+    wfree(object->children);
+    wfree(object->faces);
+    return;
+}
+
 typedef struct c_octree {
     uint32_t max_depth;
     c_octree_node root;
 } Octree;
+
+void wfree_octree(Octree* object) {
+    wfree_octree_node(&object->root);
+    return;
+}
 
 typedef struct c_level {
     char* asset_path;
@@ -152,6 +164,14 @@ typedef struct c_level {
     QuadModel* collision_model;
     Octree* octree;
 } Game_Level;
+
+void wfree_game_level(Game_Level* object) {
+    wfree(object->asset_path);
+    wfree_object(object->geometry);
+    wfree_quadmodel(object->collision_model);
+    wfree_octree(object->octree);
+    return;
+}
 
 //Game State
 typedef struct c_settings {
@@ -191,6 +211,10 @@ void wfree_state(State* object) {
         wfree_object(&object->Objects[i]);
     }
     wfree(object->Objects);
+    wfree_object(object->Debug_Cube);
+    wfree(object->Debug_Cube);
+    wfree_game_level(object->Level);
+    wfree(object->Level);
     wfree_camera(object->Camera);
     wfree(object->Camera);
     return;

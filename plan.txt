@@ -10,6 +10,6 @@ generalize key input for later rebinding
 alt-tab support
     status: investigated and found nothing, ALT-TAB keystrokes are being
             eaten while I have mouse focus
-learn to use Blender
-    status: made a hairdryer and a textured test level, working on grey-boxing
-            with only the collision volumes
+collision
+    status: did some studying
+    gravity: ray cast down to see if the player is supported, move the player to that level of support

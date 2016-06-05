@@ -51,7 +51,7 @@ void process_collision(State* state, Octree_Node* node, glm::vec3 old_position,
             physics->position.x = old_position.x;
         }
         if( collided & (face->normal.y != 0) ) {
-            physics->position.y = old_position.y;
+            physics->position.y += (2.8 + face->radii.y) - distance.y;
         }
         if( collided & (face->normal.z != 0) ) {
             physics->position.z = old_position.z;

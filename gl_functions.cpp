@@ -7,18 +7,14 @@ void normalize(glm::vec4* vector) {
 }
 
 inline GLfloat distance_squared(glm::vec3 a, glm::vec3 b) {
-    GLfloat x_diff = b.x - a.x;
-    GLfloat y_diff = b.y - a.y;
-    GLfloat z_diff = b.z - a.z;
-    return (x_diff * x_diff) + (y_diff * y_diff) + (z_diff * z_diff);
+    glm::vec3 c = b - a;
+    return (c.x*c.x) + (c.y*c.y) + (c.z*c.z);
 }
 
 inline glm::vec3 absolute_difference(glm::vec3 a, glm::vec3 b) {
-    glm::vec3 result;
-    result.x = fabs(a.x - b.x);
-    result.y = fabs(a.y - b.y);
-    result.z = fabs(a.z - b.z);
-    return result;
+    glm::vec3 c = a - b;
+    c.x = fabs(c.x); c.y = fabs(c.y); c.z = fabs(c.z);
+    return c;
 }
 
 inline glm::vec3 floor_vector(glm::vec3 vec, GLfloat min) {
