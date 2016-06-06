@@ -54,12 +54,15 @@ void process_quad_node(QuadModel* model, const aiScene* scene, aiNode* node) {
         face.normal = (0.25f * face.a.n) + (0.25f * face.b.n) +
             (0.25f * face.c.n) + (0.25f * face.d.n);
 
+        face.distance = -1.0f * glm::dot(face.center, face.normal);
         minimum = face.a.v; maximum = face.a.v;
         vector_set_if_lower(&face.a.v, &minimum); vector_set_if_lower(&face.b.v, &minimum);
         vector_set_if_lower(&face.c.v, &minimum); vector_set_if_lower(&face.d.v, &minimum);
         vector_set_if_higher(&face.a.v, &maximum); vector_set_if_higher(&face.b.v, &maximum);
         vector_set_if_higher(&face.c.v, &maximum); vector_set_if_higher(&face.d.v, &maximum);
 
+        face.minimum = minimum;
+        face.maximum = maximum;
         face.radii = absolute_difference(maximum, minimum)/2.0f;
         model->faces[i] = face;
     }

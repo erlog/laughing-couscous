@@ -1,6 +1,7 @@
 #include "renderer.h"
 
 void update_physics_object(Physics_Object* object, float delta_time_s) {
+    object->old_position = object->position;
     //rotate
     if(object->angular_velocity > 0) {
         normalize(&object->rotation_vector);
@@ -16,7 +17,6 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
         normalize(&object->movement_vector);
         glm::vec3 new_position = delta_time_s * object->velocity *
             object->movement_vector * object->quaternion;
-        new_position.y = 0;
         object->position += new_position;
         object->velocity -= object->velocity * delta_time_s *
             object->deceleration_factor;
@@ -26,6 +26,76 @@ void update_physics_object(Physics_Object* object, float delta_time_s) {
 
     //object->fall_speed += 9.81 * delta_time_s;
     //object->position.y -= object->fall_speed * delta_time_s;
+    return;
+}
+
+void process_collision(State* state, Game_Level* level, Physics_Object* physics) {
+    bool collided = false;
+
+    QuadFace* face;
+    glm::vec3 difference;
+    GLfloat source_p;
+    bool source_positive;
+    GLfloat destination_p;
+    bool destination_positive;
+    glm::vec3 intersection_point;
+    GLfloat t;
+    GLfloat t_denominator;
+
+    //TODO: re-implement this with octree
+    for(unsigned int i = 0; i < level->collision_model->face_count; i++) {
+        //implemented using as reference:
+        //http://www.flipcode.com/archives/Basic_Collision_Detection.shtml
+        face = &state->Level->collision_model->faces[i];
+
+
+        //Check if plane is being crossed
+        source_p = glm::dot(physics->old_position, face->normal) + face->distance;
+        source_positive = (source_p >= 0);
+        destination_p = glm::dot(physics->position, face->normal) + face->distance;
+        destination_positive = (destination_p >= 0);
+
+        difference = physics->position - physics->old_position;
+
+        //Plane is crossed if signs don't match
+        if(source_positive != destination_positive) {
+
+            //Get the point of intersection
+            t_denominator = glm::dot(face->normal, difference);
+            if(t_denominator != 0.0f) {
+                t = -1.0f * (glm::dot(face->normal, physics->old_position) +
+                    face->distance) / t_denominator;
+                intersection_point = physics->old_position + (difference * t);
+
+                //check if point in quad
+                if(intersection_point.x < face->minimum.x) { continue; }
+                if(intersection_point.y < face->minimum.y) { continue; }
+                if(intersection_point.z < face->minimum.z) { continue; }
+                if(intersection_point.x > face->maximum.x) { continue; }
+                if(intersection_point.y > face->maximum.y) { continue; }
+                if(intersection_point.z > face->maximum.z) { continue; }
+
+
+                //collided, we need to react
+                //TODO: find the sliding plane
+                DEBUG_LOG(i);
+                DEBUG_LOG(face->center);
+                DEBUG_LOG(physics->old_position);
+                DEBUG_LOG(physics->position);
+                DEBUG_LOG(intersection_point);
+                DEBUG_LOG(physics->velocity);
+
+                physics->movement_vector = intersection_point - physics->position;
+                update_physics_object(physics, state->DeltaTimeS);
+                process_collision(state, level, physics);
+                return;
+            }
+
+            //Plane crossed!
+            //level->last_collision = face->center;
+        }
+
+    }
     return;
 }
 
@@ -113,7 +183,7 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->physics->position = glm::vec3(0.f, 1.7f, 3.f);
+    state->Camera->physics->position = glm::vec3(0.f, 0.25f, 0.f);
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -138,12 +208,10 @@ int main() {
     state->Objects[0].physics->position = glm::vec3(-10.5f, 0.f, 0.f);
     state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
     state->Objects[0].light_direction = light_direction;
-    state->Objects[0].model->local_scale = glm::vec3(1.f, 1.f, 1.f);
     state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
     load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[1].model->local_position = glm::vec3(0.0f, 0.0f, 0.f);
     state->Objects[1].physics->position = glm::vec3(10.5f, 0.0f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[1].light_direction = light_direction;
@@ -205,14 +273,13 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //Update camera
-            glm::vec3 old_position = state->Camera->physics->position;
-            update_physics_object(state->Camera->physics, state->DeltaTimeS);
-
             glUseProgram(state->Debug_Cube->shader->id);
             glBindVertexArray(state->Debug_Cube->vao);
+            update_physics_object(state->Camera->physics, state->DeltaTimeS);
+            process_collision(state, state->Level, state->Camera->physics);
+            //gl_fast_draw_vao(state->Camera, state->Debug_Cube, state->Level->last_collision,
+                //glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
 
-            process_collision(state, &state->Level->octree->root, old_position,
-                state->Camera->physics);
 
             //We're using quaternions for the camera which will lead
             //to the camera rolling around the Z axis. To get around this we choose

@@ -33,6 +33,9 @@ typedef struct c_quad_face {
     glm::vec3 center;
     glm::vec3 radii;
     glm::vec3 normal;
+    glm::vec3 maximum;
+    glm::vec3 minimum;
+    GLfloat distance; //planar equation distance d = -1(ax+by+cz)
 } QuadFace;
 
 typedef struct c_model {
@@ -42,9 +45,6 @@ typedef struct c_model {
     glm::vec4 color;
     glm::vec3 bounding_minimum;
     glm::vec3 bounding_maximum;
-    glm::vec3 local_position; //local position offset
-    glm::vec3 local_scale; //local scale of the model
-    glm::quat local_quaternion; //local orientation of the model
 } Model;
 
 void wfree_model(Model* model) {
@@ -80,6 +80,7 @@ void wfree_shader(Shader* shader) {
 //Game Objects
 typedef struct c_physics_object {
     glm::vec3 position; //where in world-space something is in meters
+    glm::vec3 old_position;
     GLfloat velocity;   //how fast something is moving in meters/sec
     GLfloat fall_speed;
     GLfloat deceleration_factor;
@@ -88,6 +89,7 @@ typedef struct c_physics_object {
     glm::vec3 rotation_vector;   //the axis of rotation
     glm::vec3 movement_vector;  //the axis of movement
     glm::vec3 scale; //world scale of the object
+    glm::vec3 radii; //size of each axis of object
 } Physics_Object;
 
 typedef struct c_object {
@@ -163,6 +165,8 @@ typedef struct c_level {
     Object* geometry;
     QuadModel* collision_model;
     Octree* octree;
+    //DEBUG STUFF BELOW
+    glm::vec3 last_collision;
 } Game_Level;
 
 void wfree_game_level(Game_Level* level) {

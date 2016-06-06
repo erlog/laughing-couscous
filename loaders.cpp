@@ -1,5 +1,3 @@
-
-
 //Textures
 bool load_texture(const char* filename, Texture* texture) {
     texture->asset_path = construct_asset_path("textures", filename, "png");
@@ -73,6 +71,7 @@ void reload_shaders(State* state) {
 //Physics
 void load_physics(Physics_Object* physics) {
     physics->position = glm::vec3(0.f, 0.f, 0.f);
+    physics->old_position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
     physics->fall_speed = 0;
     physics->deceleration_factor = 26.5f;
@@ -82,6 +81,7 @@ void load_physics(Physics_Object* physics) {
     physics->rotation_vector = glm::vec3(0.f, 0.f, 0.f);
     physics->movement_vector = glm::vec3(0.f, 0.f, 0.f);
     physics->scale = glm::vec3(1.f, 1.f, 1.f);
+    physics->radii = glm::vec3(1.f, 1.f, 1.f);
 }
 
 //Objects
@@ -117,9 +117,6 @@ bool load_object(Object* object, const char* model_name,
 
     object->light_direction = glm::vec3(0.0f, -1.0f, -1.0f);
     object->model->color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-    object->model->local_position = glm::vec3(0.f, 0.f, 0.f);
-    object->model->local_scale = glm::vec3(1.f, 1.f, 1.f);
-    object->model->local_quaternion = glm::quat();
 
     //Physics
     object->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
@@ -148,6 +145,7 @@ bool load_level(Game_Level* level, const char* level_name) {
         "checkerboard", "blank_nm_1024", "checkerboard_spec", "shader");
     level->geometry->model->color = rgb_to_vector(0x13, 0x88, 0x88);
     level->collision_model = (QuadModel*)walloc(sizeof(QuadModel));
+    level->last_collision = glm::vec3(0.f, 0.f, 0.f);
     load_quad_mesh(level->collision_model, level_name);
     octree_from_level(level);
     return true;

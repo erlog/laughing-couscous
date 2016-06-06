@@ -32,43 +32,6 @@ inline Octree_Node* child_from_position(Octree_Node* node, glm::vec3 position) {
     return &node->children[child_index];
 }
 
-void process_collision(State* state, Octree_Node* node, glm::vec3 old_position,
-    Physics_Object* physics) {
-    bool collided = false;
-
-    QuadFace* face;
-    glm::vec3 distance;
-    for(unsigned int i = 0; i < state->Level->collision_model->face_count; i++) {
-        face = &state->Level->collision_model->faces[i];
-        distance = absolute_difference(physics->position, face->center);
-
-        if( (distance.x < face->radii.x)
-            & (distance.y < (2.8 + face->radii.y))
-            & (distance.z < face->radii.z) ) {
-            collided = true;
-        }
-        if( collided  & (face->normal.x != 0) ) {
-            physics->position.x = old_position.x;
-        }
-        if( collided & (face->normal.y != 0) ) {
-            physics->position.y += (2.8 + face->radii.y) - distance.y;
-        }
-        if( collided & (face->normal.z != 0) ) {
-            physics->position.z = old_position.z;
-        }
-
-        if(collided) {
-            gl_fast_draw_vao(state->Camera, state->Debug_Cube, face->center,
-                glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
-            physics->fall_speed = 0;
-            physics->velocity = 0;
-            return;
-        }
-    }
-    return;
-}
-
-
 inline void initialize_octree_node_children(Octree_Node* node) {
     if(node->children == NULL) {
         node->children = (Octree_Node*)walloc(sizeof(Octree_Node)*8);
@@ -181,7 +144,12 @@ void octree_from_level(Game_Level* level) {
         radius = vector_max_component(model->faces[i].radii);
         node = find_appropriate_node(octree, face_center, radius*2);
         put_face_in_node(node, &model->faces[i]);
-        find_appropriate_node(octree, face_center, 0.1f)->filled += 1;
+        #if 0
+        find_appropriate_node(octree, model->faces[i].a.v, 0.1f)->filled += 1;
+        find_appropriate_node(octree, model->faces[i].b.v, 0.1f)->filled += 1;
+        find_appropriate_node(octree, model->faces[i].c.v, 0.1f)->filled += 1;
+        find_appropriate_node(octree, model->faces[i].d.v, 0.1f)->filled += 1;
+        #endif
     }
     return;
 }
