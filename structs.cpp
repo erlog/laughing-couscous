@@ -10,9 +10,9 @@ typedef struct c_texture {
     uint8_t* buffer;
 } Texture;
 
-void wfree_texture(Texture* object) {
-    wfree(object->asset_path);
-    wfree(object->buffer); return;
+void wfree_texture(Texture* texture) {
+    wfree(texture->asset_path);
+    wfree(texture->buffer); return;
 }
 
 //3D Model
@@ -47,9 +47,9 @@ typedef struct c_model {
     glm::quat local_quaternion; //local orientation of the model
 } Model;
 
-void wfree_model(Model* object) {
-    wfree(object->asset_path);
-    wfree(object->faces);
+void wfree_model(Model* model) {
+    wfree(model->asset_path);
+    wfree(model->faces);
     return;
 }
 
@@ -61,9 +61,9 @@ typedef struct c_quad_model {
     glm::vec3 bounding_maximum;
 } QuadModel;
 
-void wfree_quadmodel(QuadModel* object) {
-    wfree(object->asset_path);
-    wfree(object->faces);
+void wfree_quadmodel(QuadModel* quadmodel) {
+    wfree(quadmodel->asset_path);
+    wfree(quadmodel->faces);
     return;
 }
 
@@ -72,8 +72,8 @@ typedef struct shader {
     GLuint id; //ID assigned to the shader program by OpenGL
 } Shader;
 
-void wfree_shader(Shader* object) {
-    wfree(object->name);
+void wfree_shader(Shader* shader) {
+    wfree(shader->name);
     return;
 }
 
@@ -118,8 +118,8 @@ typedef struct c_camera {
     glm::vec3 direction;
 } Scene_Camera;
 
-void wfree_camera(Scene_Camera* object) {
-    wfree(object->physics);
+void wfree_camera(Scene_Camera* camera) {
+    wfree(camera->physics);
     return;
 }
 
@@ -136,15 +136,15 @@ typedef struct c_octree_node {
     c_octree_node* children;
 } Octree_Node;
 
-void wfree_octree_node(Octree_Node* object) {
-    if(object->children != NULL) {
+void wfree_octree_node(Octree_Node* node) {
+    if(node->children != NULL) {
         for(int i = 0; i < 8; i++) {
-            wfree_octree_node(&object->children[i]);
+            wfree_octree_node(&node->children[i]);
         }
     }
 
-    wfree(object->children);
-    wfree(object->faces);
+    wfree(node->children);
+    wfree(node->faces);
     return;
 }
 
@@ -153,8 +153,8 @@ typedef struct c_octree {
     c_octree_node root;
 } Octree;
 
-void wfree_octree(Octree* object) {
-    wfree_octree_node(&object->root);
+void wfree_octree(Octree* octree) {
+    wfree_octree_node(&octree->root);
     return;
 }
 
@@ -165,11 +165,11 @@ typedef struct c_level {
     Octree* octree;
 } Game_Level;
 
-void wfree_game_level(Game_Level* object) {
-    wfree(object->asset_path);
-    wfree_object(object->geometry);
-    wfree_quadmodel(object->collision_model);
-    wfree_octree(object->octree);
+void wfree_game_level(Game_Level* level) {
+    wfree(level->asset_path);
+    wfree_object(level->geometry);
+    wfree_quadmodel(level->collision_model);
+    wfree_octree(level->octree);
     return;
 }
 
@@ -205,18 +205,18 @@ typedef struct c_state {
     SDL_Window* Window;
 } State;
 
-void wfree_state(State* object) {
-    wfree_texture(object->Screen);
-    for(int i = 0; i < object->ObjectCount; i++) {
-        wfree_object(&object->Objects[i]);
+void wfree_state(State* state) {
+    wfree_texture(state->Screen);
+    for(int i = 0; i < state->ObjectCount; i++) {
+        wfree_object(&state->Objects[i]);
     }
-    wfree(object->Objects);
-    wfree_object(object->Debug_Cube);
-    wfree(object->Debug_Cube);
-    wfree_game_level(object->Level);
-    wfree(object->Level);
-    wfree_camera(object->Camera);
-    wfree(object->Camera);
+    wfree(state->Objects);
+    wfree_object(state->Debug_Cube);
+    wfree(state->Debug_Cube);
+    wfree_game_level(state->Level);
+    wfree(state->Level);
+    wfree_camera(state->Camera);
+    wfree(state->Camera);
     return;
 }
 

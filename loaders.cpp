@@ -142,6 +142,7 @@ bool load_object(Object* object, const char* model_name,
 
 //Levels
 bool load_level(Game_Level* level, const char* level_name) {
+    level->asset_path = str_lit("level_name");
     level->geometry = (Object*)walloc(sizeof(Object));
     load_object(level->geometry, level_name,
         "checkerboard", "blank_nm_1024", "checkerboard_spec", "shader");

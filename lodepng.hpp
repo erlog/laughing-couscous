@@ -64,22 +64,19 @@ lodepng source code. Don't forget to remove "static" if you copypaste them
 from here.*/
 
 #if 1
-static void* lodepng_malloc(size_t size)
+static void* lodepng_malloc(size_t lodepng_size)
 {
-    //return malloc(size);
-    return walloc(size);
+    return walloc(lodepng_size);
 }
 
-static void* lodepng_realloc(void* ptr, size_t new_size)
+static void* lodepng_realloc(void* lodepng_ptr, size_t new_size)
 {
-    //return realloc(ptr, new_size);
-    return wrealloc(ptr, new_size);
+    return wrealloc(lodepng_ptr, new_size);
 }
 
-static void lodepng_free(void* ptr)
+static void lodepng_free(void* lodepng_ptr)
 {
-    //free(ptr);
-    return wfree(ptr);
+    return wfree(lodepng_ptr);
 }
 #else /*LODEPNG_COMPILE_ALLOCATORS*/
 void* lodepng_malloc(size_t size);

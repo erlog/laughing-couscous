@@ -161,7 +161,6 @@ int main() {
     load_level(state->Level, "test_level");
     octree_print(&state->Level->octree->root);
 
-    Object* object;
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
 
@@ -269,8 +268,7 @@ int main() {
 
     take_screenshot(state);
     wfree_state(state);
-    //wfree_texture(state->Screen);
-    //wfree(state->Camera);
+
     //ruby_cleanup(0);
     message_log("Allocated-", mem_info.MemoryAllocated);
     message_log("Freed-", mem_info.MemoryFreed);
