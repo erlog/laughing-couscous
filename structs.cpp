@@ -12,7 +12,8 @@ typedef struct c_texture {
 
 void wfree_texture(Texture* texture) {
     wfree(texture->asset_path);
-    wfree(texture->buffer); return;
+    wfree(texture->buffer);
+    return;
 }
 
 //3D Model
@@ -80,7 +81,7 @@ void wfree_shader(Shader* shader) {
 //Game Objects
 typedef struct c_physics_object {
     glm::vec3 position; //where in world-space something is in meters
-    glm::vec3 old_position;
+    GLfloat time_remaining;
     GLfloat velocity;   //how fast something is moving in meters/sec
     GLfloat fall_speed;
     GLfloat deceleration_factor;
@@ -105,11 +106,11 @@ typedef struct c_object {
 } Object;
 
 void wfree_object(Object* object) {
-    wfree_model(object->model);
-    wfree_texture(object->texture);
-    wfree_texture(object->normal_map);
-    wfree_texture(object->specular_map);
-    wfree_shader(object->shader);
+    wfree_model(object->model); wfree(object->model);
+    wfree_texture(object->texture); wfree(object->texture);
+    wfree_texture(object->normal_map); wfree(object->normal_map);
+    wfree_texture(object->specular_map); wfree(object->specular_map);
+    wfree_shader(object->shader); wfree(object->shader);
     wfree(object->physics);
 }
 
@@ -171,9 +172,9 @@ typedef struct c_level {
 
 void wfree_game_level(Game_Level* level) {
     wfree(level->asset_path);
-    wfree_object(level->geometry);
-    wfree_quadmodel(level->collision_model);
-    wfree_octree(level->octree);
+    wfree_object(level->geometry); wfree(level->geometry);
+    wfree_quadmodel(level->collision_model); wfree(level->collision_model);
+    wfree_octree(level->octree); wfree(level->octree);
     return;
 }
 
@@ -210,17 +211,15 @@ typedef struct c_state {
 } State;
 
 void wfree_state(State* state) {
-    wfree_texture(state->Screen);
+    wfree_texture(state->Screen); wfree(state->Screen);
     for(int i = 0; i < state->ObjectCount; i++) {
         wfree_object(&state->Objects[i]);
     }
     wfree(state->Objects);
-    wfree_object(state->Debug_Cube);
-    wfree(state->Debug_Cube);
-    wfree_game_level(state->Level);
-    wfree(state->Level);
-    wfree_camera(state->Camera);
-    wfree(state->Camera);
+
+    wfree_object(state->Debug_Cube); wfree(state->Debug_Cube);
+    wfree_game_level(state->Level); wfree(state->Level);
+    wfree_camera(state->Camera); wfree(state->Camera);
     return;
 }
 

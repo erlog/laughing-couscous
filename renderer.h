@@ -111,6 +111,7 @@
     #include "ini_handling.cpp"
     #include "gl_functions.cpp"
     #include "octree.cpp"
+    #include "physics.cpp"
     #include "loader_model.cpp"
     #include "loaders.cpp"
     #include "hid_input.cpp"

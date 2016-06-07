@@ -71,7 +71,6 @@ void reload_shaders(State* state) {
 //Physics
 void load_physics(Physics_Object* physics) {
     physics->position = glm::vec3(0.f, 0.f, 0.f);
-    physics->old_position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
     physics->fall_speed = 0;
     physics->deceleration_factor = 26.5f;

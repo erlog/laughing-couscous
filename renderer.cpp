@@ -1,43 +1,14 @@
 #include "renderer.h"
 
-void update_physics_object(Physics_Object* object, float delta_time_s) {
-    object->old_position = object->position;
-    //rotate
-    if(object->angular_velocity > 0) {
-        normalize(&object->rotation_vector);
-        float amount = glm::radians(delta_time_s * object->angular_velocity);
-        object->quaternion = glm::rotate(object->quaternion, amount, object->rotation_vector);
-        object->angular_velocity -= object->angular_velocity * delta_time_s *
-            object->deceleration_factor;
-    } else {
-        object->angular_velocity = 0;
-    }
-    //translate
-    if(object->velocity > 0) {
-        normalize(&object->movement_vector);
-        glm::vec3 new_position = delta_time_s * object->velocity *
-            object->movement_vector * object->quaternion;
-        object->position += new_position;
-        object->velocity -= object->velocity * delta_time_s *
-            object->deceleration_factor;
-    } else {
-        object->velocity = 0;
-    }
-
-    //object->fall_speed += 9.81 * delta_time_s;
-    //object->position.y -= object->fall_speed * delta_time_s;
-    return;
-}
-
-void process_collision(State* state, Game_Level* level, Physics_Object* physics) {
-    bool collided = false;
+bool process_collision(State* state, Game_Level* level,
+    Physics_Object* physics) {
 
     QuadFace* face;
     glm::vec3 difference;
-    GLfloat source_p;
-    bool source_positive;
-    GLfloat destination_p;
-    bool destination_positive;
+    GLfloat center_p;
+    bool center_positive;
+    GLfloat edge_p;
+    bool edge_positive;
     glm::vec3 intersection_point;
     GLfloat t;
     GLfloat t_denominator;
@@ -49,25 +20,27 @@ void process_collision(State* state, Game_Level* level, Physics_Object* physics)
         face = &state->Level->collision_model->faces[i];
 
 
-        //Check if plane is being crossed
-        source_p = glm::dot(physics->old_position, face->normal) + face->distance;
-        source_positive = (source_p >= 0);
-        destination_p = glm::dot(physics->position, face->normal) + face->distance;
-        destination_positive = (destination_p >= 0);
+        //Check if our sphere crosses a plane
+        center_p = glm::dot(physics->position, face->normal) + face->distance;
+        center_positive = (center_p >= 0);
+        edge_p = glm::dot(physics->position - face->normal, face->normal)
+            + face->distance;
+        edge_positive = (edge_p >= 0);
 
-        difference = physics->position - physics->old_position;
+        difference = (physics->position - face->normal) - physics->position;
 
         //Plane is crossed if signs don't match
-        if(source_positive != destination_positive) {
+        if(center_positive != edge_positive) {
 
             //Get the point of intersection
             t_denominator = glm::dot(face->normal, difference);
             if(t_denominator != 0.0f) {
-                t = -1.0f * (glm::dot(face->normal, physics->old_position) +
+                t = -1.0f * (glm::dot(face->normal, physics->position) +
                     face->distance) / t_denominator;
-                intersection_point = physics->old_position + (difference * t);
+                intersection_point = physics->position + (difference * t);
 
                 //check if point in quad
+                //TODO: there's probably a more mathy way to do this
                 if(intersection_point.x < face->minimum.x) { continue; }
                 if(intersection_point.y < face->minimum.y) { continue; }
                 if(intersection_point.z < face->minimum.z) { continue; }
@@ -75,28 +48,18 @@ void process_collision(State* state, Game_Level* level, Physics_Object* physics)
                 if(intersection_point.y > face->maximum.y) { continue; }
                 if(intersection_point.z > face->maximum.z) { continue; }
 
-
                 //collided, we need to react
-                //TODO: find the sliding plane
-                DEBUG_LOG(i);
-                DEBUG_LOG(face->center);
-                DEBUG_LOG(physics->old_position);
-                DEBUG_LOG(physics->position);
-                DEBUG_LOG(intersection_point);
-                DEBUG_LOG(physics->velocity);
+                physics->position -= (physics->position - (1.001f * face->normal))
+                    - intersection_point;
 
-                physics->movement_vector = intersection_point - physics->position;
-                update_physics_object(physics, state->DeltaTimeS);
-                process_collision(state, level, physics);
-                return;
+                if(difference.y < 0) { physics->fall_speed = 0; }
+
+                return true;
             }
-
-            //Plane crossed!
-            //level->last_collision = face->center;
         }
-
     }
-    return;
+
+    return false;
 }
 
 int main() {
@@ -171,7 +134,7 @@ int main() {
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
     //glDepthRange(1.0, -1.0); //change the handedness of the z axis
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -275,11 +238,13 @@ int main() {
             //Update camera
             glUseProgram(state->Debug_Cube->shader->id);
             glBindVertexArray(state->Debug_Cube->vao);
-            update_physics_object(state->Camera->physics, state->DeltaTimeS);
-            process_collision(state, state->Level, state->Camera->physics);
-            //gl_fast_draw_vao(state->Camera, state->Debug_Cube, state->Level->last_collision,
-                //glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), 2.0f);
 
+            state->Camera->physics->time_remaining = state->DeltaTimeS;
+            if(state->Camera->physics->velocity > 0) {
+                physics_process_movement(state->Camera->physics);
+                while(process_collision(state, state->Level,
+                    state->Camera->physics)) { }
+            }
 
             //We're using quaternions for the camera which will lead
             //to the camera rolling around the Z axis. To get around this we choose
@@ -319,7 +284,7 @@ int main() {
 
                 fps = (float)passed_frames;
                 fps /= (state->WallTime - state->LastFPSUpdateTime);
-                message_log("Frames passed per second-", fps*1000);
+                message_log("Loops spent idling per second-", fps*1000);
 
                 message_log("Memory in use-", mem_info.MemoryAllocated -
                     mem_info.MemoryFreed);
@@ -335,11 +300,11 @@ int main() {
 
     take_screenshot(state);
     wfree_state(state);
+    wfree(state);
 
     //ruby_cleanup(0);
-    message_log("Allocated-", mem_info.MemoryAllocated);
-    message_log("Freed-", mem_info.MemoryFreed);
     message_log("Leaked-", mem_info.MemoryAllocated - mem_info.MemoryFreed);
+
     SDL_Quit();
     return 0;
 }
