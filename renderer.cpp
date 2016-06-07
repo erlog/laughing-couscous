@@ -1,67 +1,5 @@
 #include "renderer.h"
 
-bool process_collision(State* state, Game_Level* level,
-    Physics_Object* physics) {
-
-    QuadFace* face;
-    glm::vec3 difference;
-    GLfloat center_p;
-    bool center_positive;
-    GLfloat edge_p;
-    bool edge_positive;
-    glm::vec3 intersection_point;
-    GLfloat t;
-    GLfloat t_denominator;
-
-    //TODO: re-implement this with octree
-    for(unsigned int i = 0; i < level->collision_model->face_count; i++) {
-        //implemented using as reference:
-        //http://www.flipcode.com/archives/Basic_Collision_Detection.shtml
-        face = &state->Level->collision_model->faces[i];
-
-
-        //Check if our sphere crosses a plane
-        center_p = glm::dot(physics->position, face->normal) + face->distance;
-        center_positive = (center_p >= 0);
-        edge_p = glm::dot(physics->position - face->normal, face->normal)
-            + face->distance;
-        edge_positive = (edge_p >= 0);
-
-        difference = (physics->position - face->normal) - physics->position;
-
-        //Plane is crossed if signs don't match
-        if(center_positive != edge_positive) {
-
-            //Get the point of intersection
-            t_denominator = glm::dot(face->normal, difference);
-            if(t_denominator != 0.0f) {
-                t = -1.0f * (glm::dot(face->normal, physics->position) +
-                    face->distance) / t_denominator;
-                intersection_point = physics->position + (difference * t);
-
-                //check if point in quad
-                //TODO: there's probably a more mathy way to do this
-                if(intersection_point.x < face->minimum.x) { continue; }
-                if(intersection_point.y < face->minimum.y) { continue; }
-                if(intersection_point.z < face->minimum.z) { continue; }
-                if(intersection_point.x > face->maximum.x) { continue; }
-                if(intersection_point.y > face->maximum.y) { continue; }
-                if(intersection_point.z > face->maximum.z) { continue; }
-
-                //collided, we need to react
-                physics->position -= (physics->position - (1.001f * face->normal))
-                    - intersection_point;
-
-                if(difference.y < 0) { physics->fall_speed = 0; }
-
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
 int main() {
     //INITIALIZATION- Failures here cause a hard exit
     Memory_Info mem_info = {0}; Global_State = &mem_info;
@@ -146,7 +84,8 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->physics->position = glm::vec3(0.f, 0.25f, 0.f);
+    state->Camera->physics->position = glm::vec3(0.f, 1.5f, 0.f);
+    state->Camera->physics->radii = glm::vec3(1.0f, 1.0f, 1.0f); //elliptical collider
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -240,10 +179,12 @@ int main() {
             glBindVertexArray(state->Debug_Cube->vao);
 
             state->Camera->physics->time_remaining = state->DeltaTimeS;
-            if(state->Camera->physics->velocity > 0) {
-                physics_process_movement(state->Camera->physics);
-                while(process_collision(state, state->Level,
-                    state->Camera->physics)) { }
+            physics_process_movement(state->Camera->physics);
+
+            for(int reps = 0; reps < 25; reps ++) {
+                if(!process_collision(state->Level, state->Camera->physics)) {
+                    break;
+                }
             }
 
             //We're using quaternions for the camera which will lead
@@ -251,14 +192,16 @@ int main() {
             //a point in front of the camera, rotate that point using a quaternion, and
             //then use the GLM function LookAt to generate a camera orientation in the
             //coordinate space we generally consider to be upright and facing forward
+            //TODO: make a better 3rd person camera
             state->Camera->direction = glm::normalize(
                 glm::vec3(0.f, 0.f, -1.f) * state->Camera->physics->quaternion);
             state->Camera->view  = glm::lookAt(state->Camera->physics->position,
                 state->Camera->direction + state->Camera->physics->position,
                 glm::vec3(0.f, 1.f, 0.f));
+            state->Camera->view = glm::translate(state->Camera->view,
+                glm::vec3(0.0f, -2.5f, 0.0f));
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
-
 
             //draw dynamic objects
             for(int i = 0; i < state->ObjectCount; i++) {
