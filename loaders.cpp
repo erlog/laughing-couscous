@@ -83,6 +83,18 @@ void load_physics(Physics_Object* physics) {
     physics->radii = glm::vec3(1.f, 1.f, 1.f);
 }
 
+//Input
+void clear_input(Game_Input* input) {
+    input->times_polled = 0;
+    input->relative_movement = false;
+    input->relative_horizontal_movement = 0.0f;
+    input->relative_vertical_movement = 0.0f;
+    input->relative_camera_movement = false;
+    input->relative_camera_x = 0.0f;
+    input->relative_camera_y = 0.0f;
+    return;
+}
+
 //Objects
 bool load_object(Object* object, const char* model_name,
     const char* texture_name, const char* nm_name, const char* spec_name,

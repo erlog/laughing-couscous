@@ -1,13 +1,16 @@
 void physics_process_movement(Physics_Object* physics) {
+    glm::vec3 direction_vector;
     if(physics->velocity > 0) {
-        physics->movement_vector.y = 0;
-        normalize(&physics->movement_vector);
+        direction_vector = physics->movement_vector * physics->quaternion;
+        normalize(&direction_vector);
+
         physics->position += physics->time_remaining * physics->velocity *
-            physics->movement_vector * physics->quaternion;
+           direction_vector;
         physics->velocity -= physics->time_remaining *
             physics->velocity  * physics->deceleration_factor;
     } else {
-        physics->velocity += 0;
+        physics->movement_vector = glm::vec3(0.0f, 0.0f, 0.0f);
+        physics->velocity = 0;
     }
 
     //TODO: break gravity out into 2 separate processes

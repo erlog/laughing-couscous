@@ -186,6 +186,16 @@ typedef struct c_settings {
     bool fullscreen;
 } Settings_Object;
 
+typedef struct c_game_input {
+    uint32_t times_polled;
+    bool relative_movement;
+    GLfloat relative_horizontal_movement;
+    GLfloat relative_vertical_movement;
+    bool relative_camera_movement;
+    GLfloat relative_camera_x;
+    GLfloat relative_camera_y;
+} Game_Input;
+
 typedef struct c_state {
     bool IsRunning;
     bool IsPaused;
@@ -201,7 +211,9 @@ typedef struct c_state {
     float DeltaTimeS; //in game time
     uint32_t FrameCounter;
     uint32_t LastFPSUpdateTime;
+    Game_Input* Input;
     Object* Debug_Cube;
+    Object* Player;
     Object* Objects;
     int ObjectCount;
     Game_Level* Level;
@@ -216,8 +228,9 @@ void wfree_state(State* state) {
         wfree_object(&state->Objects[i]);
     }
     wfree(state->Objects);
-
+    wfree(state->Input);
     wfree_object(state->Debug_Cube); wfree(state->Debug_Cube);
+    wfree_object(state->Player); wfree(state->Player);
     wfree_game_level(state->Level); wfree(state->Level);
     wfree_camera(state->Camera); wfree(state->Camera);
     return;

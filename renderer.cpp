@@ -4,6 +4,8 @@ int main() {
     //INITIALIZATION- Failures here cause a hard exit
     Memory_Info mem_info = {0}; Global_State = &mem_info;
     State* state = (State*)walloc(sizeof(State));
+    state->Input = (Game_Input*)walloc(sizeof(Game_Input));
+    clear_input(state->Input);
     state->IsRunning = true;
     state->IsPaused = true; //Pause will be toggled when our window gains focus
     load_settings(state);
@@ -84,8 +86,6 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->physics->position = glm::vec3(0.f, 1.5f, 0.f);
-    state->Camera->physics->radii = glm::vec3(1.0f, 1.0f, 1.0f); //elliptical collider
 
     //Construct Camera Matrices
     glm::mat4 projection_matrix;
@@ -97,11 +97,18 @@ int main() {
     //Load Objects
     state->Debug_Cube = (Object*)walloc(sizeof(Object));
     load_object(state->Debug_Cube, "cube", "blank", "blank_nm",
+        "blank_spec", "shader");
+
+    state->Player = (Object*)walloc(sizeof(Object));
+    load_object(state->Player, "wedge", "blank", "blank_nm",
         "blank_spec", "flat");
+    state->Player->model->color = rgb_to_vector(0xE7, 0xE0, 0x8B);
+    state->Player->physics->position = glm::vec3(3.f, 3.f, 3.f);
 
     glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
     normalize(&light_direction);
 
+    //TODO: break this out into level loading code
     state->ObjectCount = 3;
     state->Objects = (Object*)walloc(sizeof(Object)*state->ObjectCount);
 
@@ -166,42 +173,37 @@ int main() {
 
         if(state->IsPaused) { continue; }
 
-        process_keyboard(state, SDL_KeyState);
+        poll_input(state, SDL_KeyState);
+
         //TODO: is there a better way to control our framerate?
         if( state->DeltaTimeMS > 30 ) {
-            process_mouse(state);
+            process_input(state);
 
             //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            //Update camera
-            glUseProgram(state->Debug_Cube->shader->id);
-            glBindVertexArray(state->Debug_Cube->vao);
 
-            state->Camera->physics->time_remaining = state->DeltaTimeS;
-            physics_process_movement(state->Camera->physics);
+            //TODO: unified camera system
+            //first person camera
 
-            for(int reps = 0; reps < 25; reps ++) {
-                if(!process_collision(state->Level, state->Camera->physics)) {
-                    break;
-                }
-            }
-
-            //We're using quaternions for the camera which will lead
-            //to the camera rolling around the Z axis. To get around this we choose
-            //a point in front of the camera, rotate that point using a quaternion, and
-            //then use the GLM function LookAt to generate a camera orientation in the
-            //coordinate space we generally consider to be upright and facing forward
-            //TODO: make a better 3rd person camera
+            #if 0
             state->Camera->direction = glm::normalize(
                 glm::vec3(0.f, 0.f, -1.f) * state->Camera->physics->quaternion);
             state->Camera->view  = glm::lookAt(state->Camera->physics->position,
                 state->Camera->direction + state->Camera->physics->position,
                 glm::vec3(0.f, 1.f, 0.f));
-            state->Camera->view = glm::translate(state->Camera->view,
-                glm::vec3(0.0f, -2.5f, 0.0f));
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
+            #endif
+
+            //3rd-person camera
+            #if 1
+            state->Camera->physics->position = state->Player->physics->position +
+                (glm::vec3(0.0f, 3.0f, 3.0f) * state->Camera->physics->quaternion);
+            state->Camera->view = glm::lookAt(state->Camera->physics->position,
+                 state->Player->physics->position,
+                glm::vec3(0.f, 1.f, 0.f));
+            #endif
 
             //draw dynamic objects
             for(int i = 0; i < state->ObjectCount; i++) {
@@ -213,6 +215,17 @@ int main() {
             //draw level
             gl_draw_object(state->Camera, state->Level->geometry);
             //octree_debug_draw(state->Level->octree, state);
+
+            //do player
+            state->Player->physics->time_remaining = state->DeltaTimeS;
+            physics_process_movement(state->Player->physics);
+
+            for(int reps = 0; reps < 25; reps ++) {
+                if(!process_collision(state->Level, state->Player->physics)) {
+                    break;
+                }
+            }
+            gl_draw_object(state->Camera, state->Player);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;
@@ -236,6 +249,7 @@ int main() {
                 state->FrameCounter = 0;
                 state->LastFPSUpdateTime = state->WallTime;
             }
+            clear_input(state->Input);
         }
         else { passed_frames++; }
 
