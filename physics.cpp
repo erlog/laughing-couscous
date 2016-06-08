@@ -2,12 +2,19 @@ void physics_process_movement(Physics_Object* physics) {
     glm::vec3 direction_vector;
     if(physics->velocity > 0) {
         direction_vector = physics->movement_vector * physics->quaternion;
+        direction_vector.y = 0;
         normalize(&direction_vector);
 
         physics->position += physics->time_remaining * physics->velocity *
            direction_vector;
         physics->velocity -= physics->time_remaining *
             physics->velocity  * physics->deceleration_factor;
+
+        //clean up the rotation vector
+        glm::mat4 new_rotation = glm::inverse(glm::lookAt(physics->position,
+            physics->position + direction_vector,
+            glm::vec3(0.0f, 1.0f, 0.0f)));
+        physics->quaternion = glm::quat_cast(new_rotation);
     } else {
         physics->movement_vector = glm::vec3(0.0f, 0.0f, 0.0f);
         physics->velocity = 0;

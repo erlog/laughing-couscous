@@ -100,7 +100,7 @@ int main() {
         "blank_spec", "shader");
 
     state->Player = (Object*)walloc(sizeof(Object));
-    load_object(state->Player, "wedge", "blank", "blank_nm",
+    load_object(state->Player, "sphere", "blank", "blank_nm",
         "blank_spec", "flat");
     state->Player->model->color = rgb_to_vector(0xE7, 0xE0, 0x8B);
     state->Player->physics->position = glm::vec3(3.f, 3.f, 3.f);
@@ -216,16 +216,20 @@ int main() {
             gl_draw_object(state->Camera, state->Level->geometry);
             //octree_debug_draw(state->Level->octree, state);
 
-            //do player
+            //do player movement
+            state->Player->physics->quaternion = state->Camera->physics->quaternion;
             state->Player->physics->time_remaining = state->DeltaTimeS;
             physics_process_movement(state->Player->physics);
-
             for(int reps = 0; reps < 25; reps ++) {
                 if(!process_collision(state->Level, state->Player->physics)) {
                     break;
                 }
             }
+
+            gl_toggle_wireframe(true);
             gl_draw_object(state->Camera, state->Player);
+            gl_toggle_wireframe(false);
+
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;
