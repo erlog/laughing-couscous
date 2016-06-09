@@ -100,8 +100,8 @@ int main() {
         "blank_spec", "shader");
 
     state->Player = (Object*)walloc(sizeof(Object));
-    load_object(state->Player, "sphere", "blank", "blank_nm",
-        "blank_spec", "flat");
+    load_object(state->Player, "wedge", "cheese", "blank_nm_512",
+        "cheese_spec", "shader");
     state->Player->model->color = rgb_to_vector(0xE7, 0xE0, 0x8B);
     state->Player->physics->position = glm::vec3(3.f, 3.f, 3.f);
 
@@ -119,13 +119,13 @@ int main() {
     state->Objects[0].light_direction = light_direction;
     state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
-    load_object(&state->Objects[1], "wt_teapot", "blank", "blank_nm",
-        "blank_spec", "flat_shaded");
+    load_object(&state->Objects[1], "african_head", "african_head", "african_head",
+        "african_head", "flat_shaded");
     state->Objects[1].physics->position = glm::vec3(10.5f, 0.0f, 0.f);
     state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
     state->Objects[1].light_direction = light_direction;
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
-    state->Objects[1].physics->scale = glm::vec3(5.0f, 5.0f, 5.0f);
+    state->Objects[1].model->scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
@@ -136,7 +136,7 @@ int main() {
 
     state->Level = (Game_Level*)walloc(sizeof(Game_Level));
     load_level(state->Level, "test_level");
-    octree_print(&state->Level->octree->root);
+    //octree_print(&state->Level->octree->root);
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
@@ -216,19 +216,20 @@ int main() {
             gl_draw_object(state->Camera, state->Level->geometry);
             //octree_debug_draw(state->Level->octree, state);
 
-            //do player movement
+
+            //do player movement relative to the camera
             state->Player->physics->quaternion = state->Camera->physics->quaternion;
             state->Player->physics->time_remaining = state->DeltaTimeS;
             physics_process_movement(state->Player->physics);
+            //TODO: make our collision detection not require this sanity check
             for(int reps = 0; reps < 25; reps ++) {
                 if(!process_collision(state->Level, state->Player->physics)) {
                     break;
                 }
             }
-
-            gl_toggle_wireframe(true);
+            //face model in direction of movement
+            physics_face_movement_direction(state->Player);
             gl_draw_object(state->Camera, state->Player);
-            gl_toggle_wireframe(false);
 
 
             SDL_GL_SwapWindow(window);

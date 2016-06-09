@@ -42,6 +42,7 @@ bool load_shaders(Object* object) {
     }
     glAttachShader(program_id, shader_id);
 
+    //Bind shader variables
     object->shader->id = program_id;
     glBindAttribLocation(object->shader->id, 0, "local_position");
     glBindAttribLocation(object->shader->id, 1, "texture_coord");
@@ -49,11 +50,6 @@ bool load_shaders(Object* object) {
     glBindAttribLocation(object->shader->id, 3, "surface_tangent");
     glBindAttribLocation(object->shader->id, 4, "surface_bitangent");
     glLinkProgram(object->shader->id);
-
-    //Bind textures
-    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
-    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
-    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
 
     wfree(asset_path_vert);
     wfree(asset_path_frag);
@@ -79,7 +75,6 @@ void load_physics(Physics_Object* physics) {
     physics->angular_velocity = 0.f;
     physics->rotation_vector = glm::vec3(0.f, 0.f, 0.f);
     physics->movement_vector = glm::vec3(0.f, 0.f, 0.f);
-    physics->scale = glm::vec3(1.f, 1.f, 1.f);
     physics->radii = glm::vec3(1.f, 1.f, 1.f);
 }
 
@@ -106,6 +101,7 @@ bool load_object(Object* object, const char* model_name,
         message_log("Error loading texture-", texture_name);
         return false;
     }
+
     //Normal Map
     object->normal_map= (Texture*)walloc(sizeof(Texture));
     if(!load_texture(nm_name, object->normal_map)) {
@@ -128,6 +124,8 @@ bool load_object(Object* object, const char* model_name,
 
     object->light_direction = glm::vec3(0.0f, -1.0f, -1.0f);
     object->model->color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+    object->model->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+    object->model->quaternion = glm::quat();
 
     //Physics
     object->physics = (Physics_Object*)walloc(sizeof(Physics_Object));

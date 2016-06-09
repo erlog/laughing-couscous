@@ -44,6 +44,8 @@ typedef struct c_model {
     GLuint face_count;
     Face* faces;
     glm::vec4 color;
+    glm::quat quaternion;
+    glm::vec3 scale;
     glm::vec3 bounding_minimum;
     glm::vec3 bounding_maximum;
 } Model;
@@ -80,16 +82,16 @@ void wfree_shader(Shader* shader) {
 
 //Game Objects
 typedef struct c_physics_object {
+    glm::vec3 old_position;
     glm::vec3 position; //where in world-space something is in meters
     GLfloat time_remaining;
     GLfloat velocity;   //how fast something is moving in meters/sec
     GLfloat fall_speed;
     GLfloat deceleration_factor;
-    glm::quat quaternion; //orientation
+    glm::quat quaternion; //movement orientation
     GLfloat angular_velocity;   //how fast something is rotating in deg/sec
     glm::vec3 rotation_vector;   //the axis of rotation
     glm::vec3 movement_vector;  //the axis of movement
-    glm::vec3 scale; //world scale of the object
     glm::vec3 radii; //size of each axis of object
 } Physics_Object;
 

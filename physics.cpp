@@ -1,5 +1,22 @@
+void physics_face_movement_direction(Object* object) {
+    GLfloat distance = glm::distance(object->physics->old_position,
+        object->physics->position);
+
+    //checking distance prevents jitter
+    if(distance > 0.001) {
+        //look vectors need to be inverted to become rotation vectors
+        object->model->quaternion = glm::quat_cast(glm::inverse(glm::lookAt(
+            object->physics->position, object->physics->position +
+            (object->physics->position - object->physics->old_position),
+            glm::vec3(0.0f, 1.0f, 0.0f))));
+    }
+
+    return;
+}
+
 void physics_process_movement(Physics_Object* physics) {
     glm::vec3 direction_vector;
+    physics->old_position = physics->position;
     if(physics->velocity > 0) {
         direction_vector = physics->movement_vector * physics->quaternion;
         direction_vector.y = 0;
@@ -10,11 +27,6 @@ void physics_process_movement(Physics_Object* physics) {
         physics->velocity -= physics->time_remaining *
             physics->velocity  * physics->deceleration_factor;
 
-        //clean up the rotation vector
-        glm::mat4 new_rotation = glm::inverse(glm::lookAt(physics->position,
-            physics->position + direction_vector,
-            glm::vec3(0.0f, 1.0f, 0.0f)));
-        physics->quaternion = glm::quat_cast(new_rotation);
     } else {
         physics->movement_vector = glm::vec3(0.0f, 0.0f, 0.0f);
         physics->velocity = 0;

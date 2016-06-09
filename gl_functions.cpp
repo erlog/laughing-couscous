@@ -97,7 +97,6 @@ void gl_register_texture(Texture* texture) {
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
-    glBindTexture(GL_TEXTURE_2D, 0); //unbind the texture
     return;
 }
 
@@ -135,8 +134,8 @@ void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
 inline glm::mat4 build_model_matrix(Object* object) {
     glm::mat4 model_matrix;
     model_matrix = glm::translate(model_matrix, object->physics->position);
-    model_matrix *= glm::mat4_cast(object->physics->quaternion);
-    model_matrix = glm::scale(model_matrix, object->physics->scale);
+    model_matrix *= glm::mat4_cast(object->model->quaternion);
+    model_matrix = glm::scale(model_matrix, object->model->scale);
     return model_matrix;
 }
 
@@ -159,6 +158,11 @@ void gl_draw_object(Scene_Camera* camera, Object* object) {
     gl_bind_vec(object->shader->id, object->light_direction, "light_direction");
     gl_bind_mat(object->shader->id, model_view_projection, "model_view_projection");
     gl_bind_mat(object->shader->id, normal_matrix, "normal_matrix");
+
+    //bind textures
+    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
+    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
+    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
 
     //Render VAO
     glDrawArrays(GL_TRIANGLES, 0, object->model->face_count*3);
