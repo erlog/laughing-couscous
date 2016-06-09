@@ -1,12 +1,19 @@
 //Small functions that don't fit anywhere else with minimal dependencies
-void clamp(GLfloat* number, GLfloat min, GLfloat max) {
+inline void clamp(GLfloat* number, GLfloat min, GLfloat max) {
     if(*number > max) { *number = max; return; }
-    if(*number < max) { *number = min; return; }
+    if(*number < min) { *number = min; return; }
 }
-void clamp(int* number, int min, int max) {
+inline void clamp(int* number, int min, int max) {
     if(*number > max) { *number = max; return; }
-    if(*number < max) { *number = min; return; }
+    if(*number < min) { *number = min; return; }
 }
+inline void clamp(glm::vec3* input_vector, glm::vec3 min, glm::vec3 max) {
+    clamp(&input_vector->x, min.x, max.x);
+    clamp(&input_vector->y, min.y, max.y);
+    clamp(&input_vector->z, min.z, max.z);
+    return;
+}
+
 
 inline void lerp(glm::vec3* result, glm::vec3 src, glm::vec3 dest, GLfloat amt) {
     *result = src + (amt * (dest - src));

@@ -1,15 +1,25 @@
 void physics_face_movement_direction(Object* object) {
+
     GLfloat distance = glm::distance(object->physics->old_position,
         object->physics->position);
+    glm::vec3 movement_vector;
 
     //checking distance prevents jitter
-    if(distance > 0.001) {
-        //look vectors need to be inverted to become rotation vectors
-        object->model->quaternion = glm::quat_cast(glm::inverse(glm::lookAt(
-            object->physics->position, object->physics->position +
-            (object->physics->position - object->physics->old_position),
-            glm::vec3(0.0f, 1.0f, 0.0f))));
+    if(distance > 0.002) {
+        //face the direction of movement
+        movement_vector = object->physics->position - object->physics->old_position;
+    } else {
+        //face forward
+        movement_vector = glm::vec3(0.0f, 0.0f, -1.0f) * object->physics->quaternion;
+        movement_vector.y = 0.0f;
     }
+
+    //look vectors need to be inverted to become rotation vectors
+    //TODO: convert this back to quaternions and lerp this properly over time
+    normalize(&movement_vector);
+    object->model->rotation = glm::inverse(glm::lookAt(
+        glm::vec3(0.0f, 0.0f, 0.0f), movement_vector,
+        glm::vec3(0.000001f, 1.0f, 0.0000001f)));
 
     return;
 }

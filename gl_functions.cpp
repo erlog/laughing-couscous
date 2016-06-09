@@ -134,7 +134,7 @@ void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
 inline glm::mat4 build_model_matrix(Object* object) {
     glm::mat4 model_matrix;
     model_matrix = glm::translate(model_matrix, object->physics->position);
-    model_matrix *= glm::mat4_cast(object->model->quaternion);
+    model_matrix *= object->model->rotation;
     model_matrix = glm::scale(model_matrix, object->model->scale);
     return model_matrix;
 }

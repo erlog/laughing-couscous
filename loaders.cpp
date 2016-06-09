@@ -66,6 +66,7 @@ void reload_shaders(State* state) {
 
 //Physics
 void load_physics(Physics_Object* physics) {
+    physics->old_position = glm::vec3(0.f, 0.f, 0.f);
     physics->position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
     physics->fall_speed = 0;
@@ -115,6 +116,10 @@ bool load_object(Object* object, const char* model_name,
         return false;
     }
 
+    //Physics
+    object->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
+    load_physics(object->physics);
+
     //Model
     object->model = (Model*)walloc(sizeof(Model));
     if(!load_model(model_name, object->model)) {
@@ -123,13 +128,12 @@ bool load_object(Object* object, const char* model_name,
     }
 
     object->light_direction = glm::vec3(0.0f, -1.0f, -1.0f);
-    object->model->color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+    object->model->color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     object->model->scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    object->model->quaternion = glm::quat();
+    object->model->rotation = glm::mat4();
+    object->physics->radii = absolute_difference(
+        object->model->bounding_maximum, object->model->bounding_minimum)/2.0f;
 
-    //Physics
-    object->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
-    load_physics(object->physics);
 
     //Shaders
     object->shader = (Shader*)walloc(sizeof(Shader));

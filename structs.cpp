@@ -44,7 +44,7 @@ typedef struct c_model {
     GLuint face_count;
     Face* faces;
     glm::vec4 color;
-    glm::quat quaternion;
+    glm::mat4 rotation;
     glm::vec3 scale;
     glm::vec3 bounding_minimum;
     glm::vec3 bounding_maximum;
