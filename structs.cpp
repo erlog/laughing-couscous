@@ -215,6 +215,7 @@ typedef struct c_state {
     uint32_t LastFPSUpdateTime;
     Game_Input* Input;
     Object* Debug_Cube;
+    Object* Debug_Sphere;
     Object* Player;
     Object* Objects;
     int ObjectCount;

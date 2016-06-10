@@ -99,6 +99,10 @@ int main() {
     load_object(state->Debug_Cube, "cube", "blank", "blank_nm",
         "blank_spec", "shader");
 
+    state->Debug_Sphere = (Object*)walloc(sizeof(Object));
+    load_object(state->Debug_Sphere, "sphere", "blank", "blank_nm",
+        "blank_spec", "flat_shaded");
+
     state->Player = (Object*)walloc(sizeof(Object));
     load_object(state->Player, "wedge", "cheese", "blank_nm_512",
         "cheese_spec", "shader");
@@ -230,6 +234,14 @@ int main() {
             //face model in direction of movement
             physics_face_movement_direction(state->Player);
             gl_draw_object(state->Camera, state->Player);
+
+            //draw bounding sphere
+            state->Debug_Cube->physics->position = state->Player->physics->position;
+            state->Debug_Cube->model->scale = state->Player->physics->radii * 2.0f;
+            state->Debug_Cube->model->rotation = state->Player->model->rotation;
+            gl_toggle_wireframe(true);
+            gl_draw_object(state->Camera, state->Debug_Cube);
+            gl_toggle_wireframe(false);
 
 
             SDL_GL_SwapWindow(window);
