@@ -49,12 +49,13 @@ void physics_process_movement(Physics_Object* physics) {
 
 bool process_collision(Game_Level* level, Physics_Object* physics) {
 
-    QuadFace* face;
+    Collision_Face* face;
     glm::vec3 edge_point;
     GLfloat center_p; bool center_positive;
     GLfloat edge_p; bool edge_positive;
 
     //TODO: re-implement this with octree
+    //TODO: make this mathetmatically sound
     for(unsigned int i = 0; i < level->collision_model->face_count; i++) {
         //implemented using as reference:
         //http://www.peroxide.dk/download/tutorials/tut10/pxdtut10.html
@@ -84,14 +85,28 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
                 t = -1.0f * center_p / t_denominator;
                 lerp(&intersection_point, physics->position, edge_point, t);
 
-                //check if point in quad
-                //TODO: there's probably a more mathy way to do this
-                if(intersection_point.x < face->minimum.x) { continue; }
-                if(intersection_point.y < face->minimum.y) { continue; }
-                if(intersection_point.z < face->minimum.z) { continue; }
-                if(intersection_point.x > face->maximum.x) { continue; }
-                if(intersection_point.y > face->maximum.y) { continue; }
-                if(intersection_point.z > face->maximum.z) { continue; }
+
+                //check if the intersection point is within the ellipsoid
+                //space of the triangle
+                glm::vec3 radius_test = absolute_difference(face->center,
+                    intersection_point) - face->radii;
+                if(radius_test.x > 0.001) { continue; }
+                if(radius_test.y > 0.001) { continue; }
+                if(radius_test.z > 0.001) { continue; }
+
+                #if 0
+                //check if point is really in triangle
+                glm::vec3 v1 = glm::normalize(intersection_point - face->a.v);
+                glm::vec3 v2 = glm::normalize(intersection_point - face->b.v);
+                glm::vec3 v3 = glm::normalize(intersection_point - face->c.v);
+                GLfloat total_angles = glm::acos(glm::dot(v1,v2));
+                total_angles += glm::acos(glm::dot(v2,v3));
+                total_angles += glm::acos(glm::dot(v3,v1));
+                total_angles = fabs(total_angles-(2.0f*glm::pi<GLfloat>()));
+                if(total_angles > 0.005) {
+                    continue;
+                }
+                #endif
 
                 //collided, we need to react
                 GLfloat rebound_distance = glm::distance(intersection_point, edge_point);
@@ -99,7 +114,6 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
                 physics->position += (face->normal * rebound_distance);
 
                 if(edge_point.y < physics->position.y) { physics->fall_speed = 0; }
-
                 return true;
             }
         }

@@ -44,7 +44,7 @@ inline void initialize_octree_node_children(Octree_Node* node) {
         node->children[i].depth = child_depth;
         node->children[i].children = NULL;
         node->children[i].filled = 0;
-        node->children[i].faces = (QuadFace**)walloc(sizeof(QuadFace*)*32);
+        node->children[i].faces = (Collision_Face**)walloc(sizeof(Collision_Face*)*32);
         node->children[i].face_count = 0;
         node->children[i].hard_radius = child_radius;
         node->children[i].soft_radius = child_radius;
@@ -93,7 +93,7 @@ void put_bounding_box_in_octree(Octree* octree, Object* object) {
     return;
 }
 
-inline void put_face_in_node(Octree_Node* node, QuadFace* face) {
+inline void put_face_in_node(Octree_Node* node, Collision_Face* face) {
     //Check if there's room to store the face
     if(node->face_count < 32) {
         //Make sure the face isn't already in the list
@@ -113,7 +113,7 @@ inline void put_face_in_node(Octree_Node* node, QuadFace* face) {
 
 void octree_from_level(Game_Level* level) {
     //Find the size of our root node
-    QuadModel* model = level->collision_model;
+    Collision_Model* model = level->collision_model;
     glm::vec3 model_size = absolute_difference(
         level->collision_model->bounding_maximum,
         level->collision_model->bounding_minimum);
@@ -127,7 +127,7 @@ void octree_from_level(Game_Level* level) {
     octree->root.depth = 0;
     octree->root.hard_radius = largest_radius;
     octree->root.soft_radius = largest_radius;
-    octree->root.faces = (QuadFace**)walloc(sizeof(QuadFace*)*32);
+    octree->root.faces = (Collision_Face**)walloc(sizeof(Collision_Face*)*32);
     octree->root.face_count = 0;
     octree->root.position = glm::vec3(0.0f, 0.0f, 0.0f);
     octree->root.filled = 0;

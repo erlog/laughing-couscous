@@ -103,7 +103,7 @@ int main() {
     load_object(state->Player, "wedge", "cheese", "blank_nm_512",
         "cheese_spec", "shader");
     state->Player->model->color = rgb_to_vector(0xE7, 0xE0, 0x8B);
-    state->Player->physics->position = glm::vec3(3.f, 3.f, 3.f);
+    state->Player->physics->position = glm::vec3(0.f, 3.f, 0.f);
 
     glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
     normalize(&light_direction);

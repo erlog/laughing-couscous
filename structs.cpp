@@ -29,15 +29,15 @@ typedef struct c_face {
     Vertex a; Vertex b; Vertex c;
 } Face;
 
-typedef struct c_quad_face {
-    Vertex a; Vertex b; Vertex c; Vertex d;
+typedef struct c_collision_face {
+    Vertex a; Vertex b; Vertex c;
     glm::vec3 center;
     glm::vec3 radii;
     glm::vec3 normal;
     glm::vec3 maximum;
     glm::vec3 minimum;
     GLfloat distance; //planar equation distance d = -1(ax+by+cz)
-} QuadFace;
+} Collision_Face;
 
 typedef struct c_model {
     char* asset_path;
@@ -56,17 +56,17 @@ void wfree_model(Model* model) {
     return;
 }
 
-typedef struct c_quad_model {
+typedef struct c_collision_model {
     char* asset_path;
     GLuint face_count;
-    QuadFace* faces;
+    Collision_Face* faces;
     glm::vec3 bounding_minimum;
     glm::vec3 bounding_maximum;
-} QuadModel;
+} Collision_Model;
 
-void wfree_quadmodel(QuadModel* quadmodel) {
-    wfree(quadmodel->asset_path);
-    wfree(quadmodel->faces);
+void wfree_collision_model(Collision_Model* collision_model) {
+    wfree(collision_model->asset_path);
+    wfree(collision_model->faces);
     return;
 }
 
@@ -134,7 +134,7 @@ typedef struct c_octree_node {
     uint8_t depth;
     GLfloat hard_radius;
     GLfloat soft_radius;
-    QuadFace** faces;
+    Collision_Face** faces;
     uint32_t face_count;
     glm::vec3 position;
     c_octree_node* parent;
@@ -166,7 +166,7 @@ void wfree_octree(Octree* octree) {
 typedef struct c_level {
     char* asset_path;
     Object* geometry;
-    QuadModel* collision_model;
+    Collision_Model* collision_model;
     Octree* octree;
     //DEBUG STUFF BELOW
     glm::vec3 last_collision;
@@ -175,7 +175,7 @@ typedef struct c_level {
 void wfree_game_level(Game_Level* level) {
     wfree(level->asset_path);
     wfree_object(level->geometry); wfree(level->geometry);
-    wfree_quadmodel(level->collision_model); wfree(level->collision_model);
+    wfree_collision_model(level->collision_model); wfree(level->collision_model);
     wfree_octree(level->octree); wfree(level->octree);
     return;
 }
