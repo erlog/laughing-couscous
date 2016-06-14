@@ -145,10 +145,10 @@ int main() {
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
 
-    update_time(state);
-    state->TimeDifference = SDL_GetTicks();
-    state->DeltaTimeMS = 33;
-    state->DeltaTimeS = 33/1000.0f;
+    //TODO: figure out how to start my clock without eating the first frame
+    state->TimeDifference = 0;
+    state->LastUpdateTime = 0;
+    state->PauseStartTime = 0;
 
     int passed_frames = 0;
     while(state->IsRunning) {
@@ -203,7 +203,7 @@ int main() {
             //3rd-person camera
             #if 1
             state->Camera->physics->position = state->Player->physics->position +
-                (glm::vec3(0.0f, 3.0f, 3.0f) * state->Camera->physics->quaternion);
+                (glm::vec3(0.0f, 6.0f, 6.0f) * state->Camera->physics->quaternion);
             state->Camera->view = glm::lookAt(state->Camera->physics->position,
                  state->Player->physics->position,
                 glm::vec3(0.f, 1.f, 0.f));

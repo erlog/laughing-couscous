@@ -27,7 +27,8 @@ void physics_face_movement_direction(Object* object) {
 void physics_process_movement(Physics_Object* physics) {
     glm::vec3 direction_vector;
     physics->old_position = physics->position;
-    if(physics->velocity > 0) {
+    //DEBUG_LOG(physics->time_remaining);
+    if( (physics->velocity > 0) ) { // & (physics->fall_speed < 1.0f) ) {
         direction_vector = physics->movement_vector * physics->quaternion;
         direction_vector.y = 0;
         normalize(&direction_vector);

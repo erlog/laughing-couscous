@@ -104,7 +104,7 @@ void update_time(State* state) {
 void toggle_pause(State* state) {
     if(state->IsPaused) {
         state->IsPaused = false;
-        state->TimeDifference = state->WallTime - state->PauseStartTime;
+        state->TimeDifference = SDL_GetTicks() - state->PauseStartTime;
         update_time(state);
         message_log("Unpaused-", state->GameTime);
     } else {

@@ -69,7 +69,7 @@ void load_physics(Physics_Object* physics) {
     physics->old_position = glm::vec3(0.f, 0.f, 0.f);
     physics->position = glm::vec3(0.f, 0.f, 0.f);
     physics->velocity = 0.f;
-    physics->fall_speed = 0;
+    physics->fall_speed = 0.0f;
     physics->deceleration_factor = 26.5f;
     physics->fall_speed = 0.0f;
     physics->quaternion = glm::quat();

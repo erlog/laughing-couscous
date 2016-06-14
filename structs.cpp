@@ -233,6 +233,7 @@ void wfree_state(State* state) {
     wfree(state->Objects);
     wfree(state->Input);
     wfree_object(state->Debug_Cube); wfree(state->Debug_Cube);
+    wfree_object(state->Debug_Sphere); wfree(state->Debug_Sphere);
     wfree_object(state->Player); wfree(state->Player);
     wfree_game_level(state->Level); wfree(state->Level);
     wfree_camera(state->Camera); wfree(state->Camera);
