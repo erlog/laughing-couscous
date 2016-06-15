@@ -36,6 +36,12 @@ Session.vim
 *.sql
 *.sqlite
 
+# Eclipse #
+###########
+.cproject
+.settings
+.project
+
 # OS generated files #
 ######################
 .DS_Store

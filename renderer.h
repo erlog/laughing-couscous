@@ -78,8 +78,14 @@
     #endif
 
 //Other Libraries
+    //Freetype2 - Text Renderer
+    #include <ft2build.h>
+    #include <freetype.h>
+
+    //GLEW - OpenGL Extension Wrangler
     #include <GL/glew.h>
 
+    //GLM - OpenGL Math Library
     #define GLM_FORCE_RADIANS
     #include <glm/glm.hpp>
     #include <glm/gtc/matrix_transform.hpp>
@@ -87,10 +93,12 @@
     #include <glm/gtc/constants.hpp>
     #include <glm/gtx/euler_angles.hpp>
 
+    //ASSIMP - Model Parser
     #include <assimp/Importer.hpp>
     #include <assimp/scene.h>
     #include <assimp/postprocess.h>
 
+    //SDL w/ OpenGL
     #include <SDL.h>
     #include <SDL_opengl.h>
     #if MAC_COMPILE
@@ -100,13 +108,14 @@
         #include <GL/glext.h>
     #endif
 
+    //Ruby
     #include <ruby.h>
 
 //Local Libraries
     #include "lodepng.hpp"
 
 //Local Includes
-    #include "structs.cpp"
+    #include "structs.hpp"
     #include "logging.cpp"
     #include "utilities.cpp"
     #include "ini_handling.cpp"
