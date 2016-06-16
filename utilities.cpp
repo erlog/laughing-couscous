@@ -14,7 +14,6 @@ inline void clamp(glm::vec3* input_vector, glm::vec3 min, glm::vec3 max) {
     return;
 }
 
-
 inline void lerp(glm::vec3* result, glm::vec3 src, glm::vec3 dest, GLfloat amt) {
     *result = src + (amt * (dest - src));
     return;

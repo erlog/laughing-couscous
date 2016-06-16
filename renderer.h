@@ -12,6 +12,9 @@
     #include <stdarg.h>
     #include <stdio.h>
 
+//C++ Standard Library
+    #include <unordered_map>
+
 //Globals
     const char* AssetFolderPath = "objects";
     const char* OutputFolderPath = "new_output";
@@ -80,7 +83,7 @@
 //Other Libraries
     //Freetype2 - Text Renderer
     #include <ft2build.h>
-    #include <freetype.h>
+    #include FT_FREETYPE_H
 
     //GLEW - OpenGL Extension Wrangler
     #include <GL/glew.h>
@@ -118,11 +121,11 @@
     #include "structs.hpp"
     #include "logging.cpp"
     #include "utilities.cpp"
-    #include "ini_handling.cpp"
     #include "gl_functions.cpp"
     #include "octree.cpp"
     #include "physics.cpp"
     #include "loader_model.cpp"
+    #include "loader_ini.cpp"
     #include "loaders.cpp"
     #include "hid_input.cpp"
     //#include "ruby_functions.cpp"

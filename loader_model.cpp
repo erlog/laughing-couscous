@@ -107,6 +107,10 @@ bool load_model(const char* model_name, Model* model) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(model->asset_path,
         aiProcess_GenNormals | aiProcess_Triangulate | aiProcess_CalcTangentSpace);
+    if(scene == NULL) {
+        message_log("Error loading model-", model_name);
+        return false;
+    }
 
     if(!scene || (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) ||
         !scene->mRootNode) { return false; }

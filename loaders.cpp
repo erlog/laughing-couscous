@@ -1,7 +1,5 @@
 //Textures
-bool load_texture(const char* filename, Texture* texture) {
-    texture->asset_path = construct_asset_path("textures", filename, "png");
-
+bool load_texture_from_path(Texture* texture) {
     //Load PNG
     unsigned width; unsigned height;
     if(lodepng_decode32_file(&texture->buffer, &width, &height,
@@ -20,12 +18,17 @@ bool load_texture(const char* filename, Texture* texture) {
     return true;
 }
 
+bool load_texture(const char* filename, Texture* texture) {
+    texture->asset_path = construct_asset_path("textures", filename, "png");
+    return load_texture_from_path(texture);
+}
+
 //Shaders
-bool load_shaders(Object* object) {
+bool load_shaders(Shader* shader) {
     char* asset_path_vert =
-        construct_asset_path("shaders", object->shader->name, "vert");
+        construct_asset_path("shaders", shader->name, "vert");
     char* asset_path_frag =
-        construct_asset_path("shaders", object->shader->name, "frag");
+        construct_asset_path("shaders", shader->name, "frag");
 
     GLint program_id = glCreateProgram();
     GLuint shader_id;
@@ -43,13 +46,13 @@ bool load_shaders(Object* object) {
     glAttachShader(program_id, shader_id);
 
     //Bind shader variables
-    object->shader->id = program_id;
-    glBindAttribLocation(object->shader->id, 0, "local_position");
-    glBindAttribLocation(object->shader->id, 1, "texture_coord");
-    glBindAttribLocation(object->shader->id, 2, "surface_normal");
-    glBindAttribLocation(object->shader->id, 3, "surface_tangent");
-    glBindAttribLocation(object->shader->id, 4, "surface_bitangent");
-    glLinkProgram(object->shader->id);
+    shader->id = program_id;
+    glBindAttribLocation(shader->id, 0, "local_position");
+    glBindAttribLocation(shader->id, 1, "texture_coord");
+    glBindAttribLocation(shader->id, 2, "surface_normal");
+    glBindAttribLocation(shader->id, 3, "surface_tangent");
+    glBindAttribLocation(shader->id, 4, "surface_bitangent");
+    glLinkProgram(shader->id);
 
     wfree(asset_path_vert);
     wfree(asset_path_frag);
@@ -60,7 +63,7 @@ void reload_shaders(State* state) {
     message_log("Reloading shaders");
     //TODO: reload level shaders
     for(int i = 0; i < state->ObjectCount; i++) {
-        load_shaders(&state->Objects[i]);
+        load_shaders(state->Objects[i].shader);
     }
 }
 
@@ -90,6 +93,7 @@ void clear_input(Game_Input* input) {
     input->relative_camera_y = 0.0f;
     return;
 }
+
 
 //Objects
 bool load_object(Object* object, const char* model_name,
@@ -138,15 +142,30 @@ bool load_object(Object* object, const char* model_name,
     //Shaders
     object->shader = (Shader*)walloc(sizeof(Shader));
     object->shader->name = str_lit(shader_name);
-    load_shaders(object);
-
-    //Bind textures
-    gl_bind_texture(object->shader->id, object->texture, 0, "diffuse");
-    gl_bind_texture(object->shader->id, object->normal_map, 1, "normal");
-    gl_bind_texture(object->shader->id, object->specular_map, 2, "specular");
+    load_shaders(object->shader);
 
     //Make OpenGL VBO and VAO
     gl_register_object(object);
+    return true;
+}
+
+//Fonts
+
+bool load_font(Font* font, FT_Library library, const char* font_name,
+    FT_UInt pixel_size) {
+    font->asset_path = construct_asset_path("fonts", font_name, "ttf");
+
+    //TODO: consider if we need a full object for this
+    font->quad = (Object*)walloc(sizeof(Object));
+    load_object(font->quad, "quad", "blank", "blank_nm", "blank_spec",
+        "flat_texture");
+
+    if(FT_New_Face(library, font->asset_path, 0, &font->face)) {
+        message_log("Failed to load face-", font_name);
+        return false;
+    }
+
+    FT_Set_Pixel_Sizes(font->face, 0, pixel_size);
     return true;
 }
 

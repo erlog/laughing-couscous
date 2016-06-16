@@ -80,6 +80,7 @@ void wfree_shader(Shader* shader) {
     return;
 }
 
+
 //Game Objects
 typedef struct c_physics_object {
     glm::vec3 old_position;
@@ -127,6 +128,22 @@ void wfree_camera(Scene_Camera* camera) {
     wfree(camera->physics);
     return;
 }
+
+//Text
+typedef struct c_glyph {
+    GLuint texture_id;
+    glm::ivec2 size;
+    glm::ivec2 bearing;
+    glm::ivec2 advance;
+} Glyph;
+
+typedef struct c_font {
+    char* asset_path;
+    FT_Face face;
+    Object* quad;
+    //TODO: Unicode!
+    std::unordered_map<char, Glyph> glyphs;
+} Font;
 
 //Levels
 typedef struct c_octree_node {
@@ -214,6 +231,7 @@ typedef struct c_state {
     uint32_t FrameCounter;
     uint32_t LastFPSUpdateTime;
     Game_Input* Input;
+    FT_Library FreeType_Library;
     Object* Debug_Cube;
     Object* Debug_Sphere;
     Object* Player;

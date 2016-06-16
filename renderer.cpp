@@ -79,7 +79,6 @@ int main() {
     //glDepthRange(1.0, -1.0); //change the handedness of the z axis
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
     //GAME INIT- Failures here may cause a proper smooth exit when necessary
 
     //Construct Camera
@@ -141,6 +140,14 @@ int main() {
     state->Level = (Game_Level*)walloc(sizeof(Game_Level));
     load_level(state->Level, "test_level");
     //octree_print(&state->Level->octree->root);
+
+    //Fonts
+    if(FT_Init_FreeType(&state->FreeType_Library)) {
+        message_log("Failed to load FreeType");
+    }
+
+    Font test_font;
+    load_font(&test_font, state->FreeType_Library, "DroidSans", 32);
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
@@ -243,6 +250,13 @@ int main() {
             gl_draw_object(state->Camera, state->Debug_Cube);
             gl_toggle_wireframe(false);
 
+
+            //draw test text
+            test_font.quad->physics->position.x = 0.0f;
+            test_font.quad->physics->position.y = 3.0f;
+            test_font.quad->physics->position.z = 5.0f;
+            puts("---");
+            gl_draw_text(state->Camera, &test_font, "#sagamedev");
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;
