@@ -147,7 +147,7 @@ int main() {
     }
 
     Font test_font;
-    load_font(&test_font, state->FreeType_Library, "DroidSans", 32);
+    load_font(&test_font, state->FreeType_Library, "DroidSans", 128);
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
@@ -253,9 +253,8 @@ int main() {
 
             //draw test text
             test_font.quad->physics->position.x = 0.0f;
-            test_font.quad->physics->position.y = 3.0f;
+            test_font.quad->physics->position.y = 1.0f;
             test_font.quad->physics->position.z = 5.0f;
-            puts("---");
             gl_draw_text(state->Camera, &test_font, "#sagamedev");
 
             SDL_GL_SwapWindow(window);

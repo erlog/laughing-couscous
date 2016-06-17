@@ -7,6 +7,10 @@ void message_log(const char* message, const char* predicate) {
 }
 
 //Vectors, etc.
+void message_log(const char* message, glm::vec2 vec) {
+    printf("%i: %s (%f, %f)\n",
+        SDL_GetTicks(), message, vec.x, vec.y);
+}
 void message_log(const char* message, glm::vec3 vec) {
     printf("%i: %s (%f, %f, %f)\n",
         SDL_GetTicks(), message, vec.x, vec.y, vec.z);

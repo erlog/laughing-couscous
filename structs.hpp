@@ -132,14 +132,16 @@ void wfree_camera(Scene_Camera* camera) {
 //Text
 typedef struct c_glyph {
     GLuint texture_id;
-    glm::ivec2 size;
-    glm::ivec2 bearing;
-    glm::ivec2 advance;
+    glm::vec2 center;
+    glm::vec2 size;
+    glm::vec2 bearing;
+    glm::vec2 advance;
 } Glyph;
 
 typedef struct c_font {
     char* asset_path;
     FT_Face face;
+    GLfloat size;
     Object* quad;
     //TODO: Unicode!
     std::unordered_map<char, Glyph> glyphs;

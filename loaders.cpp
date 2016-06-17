@@ -154,6 +154,7 @@ bool load_object(Object* object, const char* model_name,
 bool load_font(Font* font, FT_Library library, const char* font_name,
     FT_UInt pixel_size) {
     font->asset_path = construct_asset_path("fonts", font_name, "ttf");
+    font->size = (GLfloat)pixel_size;
 
     //TODO: consider if we need a full object for this
     font->quad = (Object*)walloc(sizeof(Object));

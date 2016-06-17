@@ -161,32 +161,47 @@ inline glm::mat4 build_model_matrix(Object* object) {
     return model_matrix;
 }
 
-Glyph load_glyph(Font* font, char character) {
+inline Glyph load_glyph(Font* font, char character) {
     //checks if in cache and generates if it's not
     if(font->glyphs.find(character) == font->glyphs.end()) {
+        message_log("Rendering glyph-", character);
         FT_Load_Char(font->face, character, FT_LOAD_RENDER);
-        Glyph glyph;
-        glyph.size = glm::ivec2(font->face->glyph->bitmap.width,
-            font->face->glyph->bitmap.rows);
-        glyph.bearing = glm::ivec2(font->face->glyph->bitmap_left,
-            font->face->glyph->bitmap_top);
-        glyph.advance = glm::ivec2(font->face->glyph->advance.x,
-            font->face->glyph->advance.y);
+        Glyph glyph; FT_Glyph ft_glyph; FT_BBox bbox;
+
+        //Get glyph object and ask for the bounding box
+        FT_Get_Glyph(font->face->glyph, &ft_glyph);
+        FT_Glyph_Get_CBox(ft_glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
 
         glGenTextures(1, &glyph.texture_id);
         glBindTexture(GL_TEXTURE_2D, glyph.texture_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, glyph.size.x,
-            glyph.size.y, 0, GL_RED, GL_UNSIGNED_BYTE,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->face->glyph->bitmap.width,
+            font->face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE,
             font->face->glyph->bitmap.buffer);
 
-        //set texture options
+        //Set texture options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        //Get glyph metrics
+        glyph.center = glm::vec2(
+            (bbox.xMin + ( (bbox.xMax-bbox.xMin)/2.0f )) / font->size,
+            (bbox.yMin + ( (bbox.yMax-bbox.yMin)/2.0f )) / font->size);
+        glyph.size = glm::vec2(
+            font->face->glyph->bitmap.width/font->size,
+            font->face->glyph->bitmap.rows/font->size);
+        glyph.bearing = glm::vec2(
+            font->face->glyph->bitmap_left/font->size,
+            font->face->glyph->bitmap_top/font->size);
+        glyph.advance = glm::vec2(
+            font->face->glyph->advance.x/(font->size*64.0f),
+            font->face->glyph->advance.y/(font->size*64.0f));
+
         font->glyphs[character] = glyph;
+        FT_Done_Glyph(ft_glyph);
         return glyph;
+
     } else {
         return font->glyphs[character];
     }
@@ -194,19 +209,24 @@ Glyph load_glyph(Font* font, char character) {
 
 void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character) {
     Glyph glyph = load_glyph(font, character);
-    font->quad->model->scale.x = glyph.size.x/32.0f;
-    font->quad->model->scale.y = glyph.size.y/32.0f;
+    font->quad->model->scale.x = glyph.size.x;
+    font->quad->model->scale.y = glyph.size.y;
     font->quad->model->scale.z = 1.0f;
-    font->quad->physics->position.y = -0.5f + (glyph.bearing.y/32.0f);
+
+    //move to new center
+    font->quad->physics->position.x += glyph.center.x;
+    font->quad->physics->position.y += glyph.center.y;
+
     glm::mat4 model_matrix = build_model_matrix(font->quad);
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
     gl_bind_mat(font->quad->shader->id, model_view_projection, "model_view_projection");
     gl_bind_texture(font->quad->shader->id, glyph.texture_id, 0, "diffuse");
 
     glDrawArrays(GL_TRIANGLES, 0, font->quad->model->face_count*3);
-    DEBUG_LOG(character);
-    DEBUG_LOG(glyph.advance.x);
-    font->quad->physics->position.x += (glyph.size.x + 3)/32.0f;
+
+    //move to old center and advance horizontal position
+    font->quad->physics->position.y -= glyph.center.y;
+    font->quad->physics->position.x += glyph.center.x;
 }
 
 void gl_draw_text(Scene_Camera* camera, Font* font, const char* text) {
