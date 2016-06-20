@@ -66,18 +66,16 @@ int main() {
     }
 
     //Set up simple OpenGL environment for rendering
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1); glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glMatrixMode( GL_PROJECTION ); glLoadIdentity();
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
     glClearColor( 0.f, 0.f, 0.f, 1.f );
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND); glEnable(GL_DEPTH_TEST); glEnable(GL_CULL_FACE);
     //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
     //glDepthRange(1.0, -1.0); //change the handedness of the z axis
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
     //GAME INIT- Failures here may cause a proper smooth exit when necessary
 
@@ -85,13 +83,17 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-
-    //Construct Camera Matrices
-    glm::mat4 projection_matrix;
-    projection_matrix = glm::perspective(glm::radians(45.f),
+    state->Camera->projection = glm::perspective(glm::radians(45.f),
         (float)state->Screen->width/state->Screen->height, 0.1f, 100.f);
-    state->Camera->projection = projection_matrix;
 
+    //Construct screen-space camera for HUD elements
+    Scene_Camera screen_camera;
+    screen_camera.physics = (Physics_Object*)walloc(sizeof(Physics_Object));
+    load_physics(screen_camera.physics);
+    //TODO: figure out how to make this in semi-normalized coords that
+    //can be somewhat resolution-independent
+    screen_camera.projection = glm::ortho(0.0f, (float)state->Screen->width,
+        0.0f, (float)state->Screen->height);
 
     //Load Objects
     state->Debug_Cube = (Object*)walloc(sizeof(Object));
@@ -252,10 +254,9 @@ int main() {
 
 
             //draw test text
-            test_font.quad->physics->position.x = 0.0f;
-            test_font.quad->physics->position.y = 1.0f;
-            test_font.quad->physics->position.z = 5.0f;
-            gl_draw_text(state->Camera, &test_font, "#sagamedev");
+            //TODO: make this an FPS counter
+            test_font.quad->physics->position = glm::vec3(5.0f, 5.0f, 0.0f);
+            gl_draw_text(&screen_camera, &test_font, "#sa gamedev", 32.0f);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

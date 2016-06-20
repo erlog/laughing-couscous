@@ -1,5 +1,4 @@
 void physics_face_movement_direction(Object* object) {
-
     GLfloat distance = glm::distance(object->physics->old_position,
         object->physics->position);
     glm::vec3 movement_vector;
@@ -49,7 +48,6 @@ void physics_process_movement(Physics_Object* physics) {
 }
 
 bool process_collision(Game_Level* level, Physics_Object* physics) {
-
     Collision_Face* face;
     glm::vec3 edge_point;
     GLfloat center_p; bool center_positive;
@@ -61,9 +59,11 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
         //implemented using as reference:
         //http://www.peroxide.dk/download/tutorials/tut10/pxdtut10.html
 
-        //Check if our sphere crosses a plane by shooting a ray from
+        //Check if our elliptical volume crosses a plane by shooting a ray from
         //the center of our sphere to the closest point facing the polygon
         face = &level->collision_model->faces[i];
+        //TODO: figure out rotating the bounding ellipse without falling
+        //through the world and everything being terrible
         edge_point = physics->position - (physics->radii * face->normal);
 
         center_p = glm::dot(physics->position, face->normal) + face->distance;
@@ -78,7 +78,8 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
             GLfloat t; GLfloat t_denominator;
 
             //Get the point of intersection
-            t_denominator = glm::dot(face->normal, edge_point - physics->position);
+            t_denominator =
+                glm::dot(face->normal, edge_point - physics->position);
 
             //make sure the ray isn't parallel to the plane
             if(t_denominator != 0.0f) {
@@ -110,11 +111,14 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
                 #endif
 
                 //collided, we need to react
-                GLfloat rebound_distance = glm::distance(intersection_point, edge_point);
+                GLfloat rebound_distance =
+                    glm::distance(intersection_point, edge_point);
                 rebound_distance += 0.001f; //to make sure we're clear of the obstruction
                 physics->position += (face->normal * rebound_distance);
 
-                if(edge_point.y < physics->position.y) { physics->fall_speed = 0; }
+                if(edge_point.y < physics->position.y) {
+                    physics->fall_speed = 0;
+                }
                 return true;
             }
         }

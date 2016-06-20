@@ -150,7 +150,6 @@ bool load_object(Object* object, const char* model_name,
 }
 
 //Fonts
-
 bool load_font(Font* font, FT_Library library, const char* font_name,
     FT_UInt pixel_size) {
     font->asset_path = construct_asset_path("fonts", font_name, "ttf");

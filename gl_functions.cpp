@@ -162,7 +162,7 @@ inline glm::mat4 build_model_matrix(Object* object) {
 }
 
 inline Glyph load_glyph(Font* font, char character) {
-    //checks if in cache and generates if it's not
+    //checks if already in cache and generates if it's not
     if(font->glyphs.find(character) == font->glyphs.end()) {
         message_log("Rendering glyph-", character);
         FT_Load_Char(font->face, character, FT_LOAD_RENDER);
@@ -191,12 +191,10 @@ inline Glyph load_glyph(Font* font, char character) {
         glyph.size = glm::vec2(
             font->face->glyph->bitmap.width/font->size,
             font->face->glyph->bitmap.rows/font->size);
-        glyph.bearing = glm::vec2(
-            font->face->glyph->bitmap_left/font->size,
-            font->face->glyph->bitmap_top/font->size);
         glyph.advance = glm::vec2(
             font->face->glyph->advance.x/(font->size*64.0f),
             font->face->glyph->advance.y/(font->size*64.0f));
+        glyph.advance -= glyph.center; //precalculate advance from center
 
         font->glyphs[character] = glyph;
         FT_Done_Glyph(ft_glyph);
@@ -207,15 +205,16 @@ inline Glyph load_glyph(Font* font, char character) {
     }
 }
 
-void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character) {
+void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
+    GLfloat size) {
     Glyph glyph = load_glyph(font, character);
-    font->quad->model->scale.x = glyph.size.x;
-    font->quad->model->scale.y = glyph.size.y;
+    font->quad->model->scale.x = glyph.size.x * size;
+    font->quad->model->scale.y = glyph.size.y * size;
     font->quad->model->scale.z = 1.0f;
 
-    //move to new center
-    font->quad->physics->position.x += glyph.center.x;
-    font->quad->physics->position.y += glyph.center.y;
+    //move from edge of bounding box to center
+    font->quad->physics->position.x += (glyph.center.x * size);
+    font->quad->physics->position.y += (glyph.center.y * size);
 
     glm::mat4 model_matrix = build_model_matrix(font->quad);
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
@@ -224,18 +223,20 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character) {
 
     glDrawArrays(GL_TRIANGLES, 0, font->quad->model->face_count*3);
 
-    //move to old center and advance horizontal position
-    font->quad->physics->position.y -= glyph.center.y;
-    font->quad->physics->position.x += glyph.center.x;
+    //move from center to right edge of the glyph based on
+    //the precalculated advance from the center
+    font->quad->physics->position.x += (glyph.advance.x * size);
+    font->quad->physics->position.y += (glyph.advance.y * size);
 }
 
-void gl_draw_text(Scene_Camera* camera, Font* font, const char* text) {
+void gl_draw_text(Scene_Camera* camera, Font* font, const char* text,
+    GLfloat size) {
     glUseProgram(font->quad->shader->id);
     glm::vec3 start_position = font->quad->physics->position;
     glBindVertexArray(font->quad->vao);
     size_t length = strlen(text);
     for(size_t i = 0; i < length; i++) {
-        gl_draw_font_glyph(camera, font, text[i]);
+        gl_draw_font_glyph(camera, font, text[i], size);
     }
     font->quad->physics->position = start_position;
     glBindVertexArray(0);

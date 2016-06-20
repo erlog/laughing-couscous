@@ -132,10 +132,9 @@ void wfree_camera(Scene_Camera* camera) {
 //Text
 typedef struct c_glyph {
     GLuint texture_id;
-    glm::vec2 center;
-    glm::vec2 size;
-    glm::vec2 bearing;
-    glm::vec2 advance;
+    glm::vec2 center; //center of the actual character within bounding box
+    glm::vec2 size;   //size of the actual character within bounding box
+    glm::vec2 advance; //amount to advance pen by after drawing glyph
 } Glyph;
 
 typedef struct c_font {
