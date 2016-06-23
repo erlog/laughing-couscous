@@ -1,6 +1,9 @@
 #include "renderer.h"
 
 int main() {
+    //DEBUG: ICU TESTING
+    //UChar* test_uchar = (UChar*)walloc(sizeof(UChar));
+
     //INITIALIZATION- Failures here cause a hard exit
     Memory_Info mem_info = {0}; Global_State = &mem_info;
     State* state = (State*)walloc(sizeof(State));
@@ -26,7 +29,7 @@ int main() {
     state->Screen->buffer = (uint8_t*)walloc(state->Screen->buffer_size);
 
     //Start Ruby
-    //ruby_setup_render_environment();
+    ruby_setup_render_environment();
     //VALUE rb_update_func = rb_intern("ruby_update");
 
     //Initialize SDL and OpenGL
@@ -149,7 +152,7 @@ int main() {
     }
 
     Font test_font;
-    load_font(&test_font, state->FreeType_Library, "DroidSans", 128);
+    load_font(&test_font, "ComicSans");
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");
@@ -255,8 +258,8 @@ int main() {
 
             //draw test text
             //TODO: make this an FPS counter
-            test_font.quad->physics->position = glm::vec3(5.0f, 5.0f, 0.0f);
-            gl_draw_text(&screen_camera, &test_font, "#sa gamedev", 32.0f);
+            //test_font.quad->physics->position = glm::vec3(5.0f, 5.0f, 0.0f);
+            //gl_draw_text(&screen_camera, &test_font, "#sa gamedev", 32.0f);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;
@@ -290,7 +293,7 @@ int main() {
     wfree_state(state);
     wfree(state);
 
-    //ruby_cleanup(0);
+    ruby_cleanup(0);
     message_log("Leaked-", mem_info.MemoryAllocated - mem_info.MemoryFreed);
 
     SDL_Quit();

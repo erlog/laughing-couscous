@@ -131,7 +131,9 @@ void wfree_camera(Scene_Camera* camera) {
 
 //Text
 typedef struct c_glyph {
-    GLuint texture_id;
+    //TODO: Unicode!
+    char char_id;
+    GLuint page_id;
     glm::vec2 center; //center of the actual character within bounding box
     glm::vec2 size;   //size of the actual character within bounding box
     glm::vec2 advance; //amount to advance pen by after drawing glyph
@@ -141,6 +143,7 @@ typedef struct c_font {
     char* asset_path;
     FT_Face face;
     GLfloat size;
+    Texture* page;
     Object* quad;
     //TODO: Unicode!
     std::unordered_map<char, Glyph> glyphs;

@@ -150,22 +150,16 @@ bool load_object(Object* object, const char* model_name,
 }
 
 //Fonts
-bool load_font(Font* font, FT_Library library, const char* font_name,
-    FT_UInt pixel_size) {
-    font->asset_path = construct_asset_path("fonts", font_name, "ttf");
-    font->size = (GLfloat)pixel_size;
+bool load_font(Font* font, const char* font_name) {
+    font->asset_path = construct_asset_path("fonts", font_name, "fnt");
 
     //TODO: consider if we need a full object for this
     font->quad = (Object*)walloc(sizeof(Object));
+    font->page = (Texture*)walloc(sizeof(Texture));
     load_object(font->quad, "quad", "blank", "blank_nm", "blank_spec",
         "flat_texture");
-
-    if(FT_New_Face(library, font->asset_path, 0, &font->face)) {
-        message_log("Failed to load face-", font_name);
-        return false;
-    }
-
-    FT_Set_Pixel_Sizes(font->face, 0, pixel_size);
+    ruby_load_font(font, font->asset_path);
+    load_texture_from_path(font->page);
     return true;
 }
 

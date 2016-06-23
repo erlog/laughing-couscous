@@ -81,6 +81,11 @@
     #endif
 
 //Other Libraries
+    //ICU - International Components for Unicode
+    #include <unicode/utypes.h>
+    #include <unicode/putil.h>
+    #include <unicode/ustdio.h>
+
     //Freetype2 - Text Renderer
     #include <ft2build.h>
     #include FT_FREETYPE_H
@@ -122,6 +127,7 @@
     #include "structs.hpp"
     #include "logging.cpp"
     #include "utilities.cpp"
+    #include "ruby_functions.cpp"
     #include "gl_functions.cpp"
     #include "octree.cpp"
     #include "physics.cpp"
@@ -129,5 +135,4 @@
     #include "loader_ini.cpp"
     #include "loaders.cpp"
     #include "hid_input.cpp"
-    //#include "ruby_functions.cpp"
 

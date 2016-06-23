@@ -161,6 +161,7 @@ inline glm::mat4 build_model_matrix(Object* object) {
     return model_matrix;
 }
 
+#if 0
 inline Glyph load_glyph(Font* font, char character) {
     //checks if already in cache and generates if it's not
     if(font->glyphs.find(character) == font->glyphs.end()) {
@@ -229,9 +230,12 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
     font->quad->physics->position.y += (glyph.advance.y * size);
 }
 
+#endif
+
 void gl_draw_text(Scene_Camera* camera, Font* font, const char* text,
     GLfloat size) {
     glUseProgram(font->quad->shader->id);
+    #if 0
     glm::vec3 start_position = font->quad->physics->position;
     glBindVertexArray(font->quad->vao);
     size_t length = strlen(text);
@@ -239,6 +243,7 @@ void gl_draw_text(Scene_Camera* camera, Font* font, const char* text,
         gl_draw_font_glyph(camera, font, text[i], size);
     }
     font->quad->physics->position = start_position;
+    #endif
     glBindVertexArray(0);
 }
 
