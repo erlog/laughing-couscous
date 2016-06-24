@@ -157,9 +157,12 @@ bool load_font(Font* font, const char* font_name) {
     font->quad = (Object*)walloc(sizeof(Object));
     font->page = (Texture*)walloc(sizeof(Texture));
     load_object(font->quad, "quad", "blank", "blank_nm", "blank_spec",
-        "flat_texture");
+        "sdf_font");
     ruby_load_font(font, font->asset_path);
-    load_texture_from_path(font->page);
+    if(!load_texture_from_path(font->page)) {
+        message_log("Error loading texture-", font->page->asset_path);
+        return false;
+    }
     return true;
 }
 

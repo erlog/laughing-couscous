@@ -1,5 +1,7 @@
 #AngelCode BMFont loader written in reference to:
 #  http://www.angelcode.com/products/bmfont/doc/file_format.html
+#There is C code elsewhere that hooks to this ruby code and interprets the
+#created dictionary.
 
 def load_font_info(dict, line)
     dict["face"] = line.slice(/face=\"(?<grp>.+?)"/, "grp");
@@ -19,8 +21,8 @@ end
 def load_font_common(dict, line)
     dict["lineHeight"] = line.slice(/lineHeight=(?<grp>\d+)\s/, "grp").to_i;
     dict["base"] = line.slice(/base=(?<grp>\d+)\s/, "grp").to_i;
-    dict["scaleW"] = line.slice(/scaleW=(?<grp>\d+)\s/, "grp").to_f;
-    dict["scaleH"] = line.slice(/scaleH=(?<grp>\d+)\s/, "grp").to_f;
+    dict["scaleW"] = line.slice(/scaleW=(?<grp>\d+)\s/, "grp").to_i;
+    dict["scaleH"] = line.slice(/scaleH=(?<grp>\d+)\s/, "grp").to_i;
     dict["pages"] = line.slice(/pages=(?<grp>\d+)\s/, "grp").to_i;
     dict["packed"] = line.slice(/packed=(?<grp>\d+)\s/, "grp").to_i;
     dict["alphaChnl"] = line.slice(/alphaChnl=(?<grp>\d+)\s/, "grp").to_i;
@@ -34,22 +36,19 @@ def load_font_page(dict, line)
     dict[id] = line.slice(/file=\"(?<grp>.+?)"/, "grp");
 end
 
-def load_font_char(dict, line, scale_x, scale_y)
+def load_font_char(dict, line)
     id = line.slice(/id=(?<grp>\d+)\s/, "grp").to_i;
     dict[id] = {};
     dict[id]["id"] = id;
-    dict[id]["x"] = line.slice(/x=(?<grp>\d+)\s/, "grp").to_i/scale_x;
-    dict[id]["y"] = line.slice(/y=(?<grp>\d+)\s/, "grp").to_i/scale_y;
-    dict[id]["width"] = line.slice(/width=(?<grp>\d+)\s/, "grp").to_i/scale_x;
-    dict[id]["height"] = line.slice(/height=(?<grp>\d+)\s/, "grp").to_i/scale_y;
-    dict[id]["xoffset"] = line.slice(/xoffset=(?<grp>\d+)\s/, "grp").to_i/scale_x;
-    dict[id]["yoffset"] = line.slice(/yoffset=(?<grp>\d+)\s/, "grp").to_i/scale_y;
-    dict[id]["xadvance"] = line.slice(/xadvance=(?<grp>\d+)\s/, "grp").to_i/scale_x;
+    dict[id]["x"] = line.slice(/x=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["y"] = line.slice(/y=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["width"] = line.slice(/width=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["height"] = line.slice(/height=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["xoffset"] = line.slice(/xoffset=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["yoffset"] = line.slice(/yoffset=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["xadvance"] = line.slice(/xadvance=(?<grp>\d+)\s/, "grp").to_i;
     dict[id]["page"] = line.slice(/page=(?<grp>\d+)\s/, "grp").to_i;
     dict[id]["chnl"] = line.slice(/chnl=(?<grp>\d+)\s/, "grp").to_i;
-
-    dict[id]["x"] += dict[id]["xoffset"]; dict[id]["y"] += dict[id]["yoffset"];
-    dict[id]["x"] += dict[id]["width"]/2.0; dict[id]["y"] += dict[id]["height"]/2.0;
 end
 
 def load_font(path)
@@ -62,8 +61,7 @@ def load_font(path)
         load_font_info(dict["info"], line) if (line[0..3] == "info");
         load_font_common(dict["common"], line) if (line[0..5] == "common");
         load_font_page(dict["page"], line) if (line[0..3] == "page");
-        load_font_char(dict["char"], line, dict["common"]["scaleW"],
-            dict["common"]["scaleH"],) if (line[0..3] == "char");
+        load_font_char(dict["char"], line) if (line[0..3] == "char");
     end
 
     dict["char_ids"] = dict["char"].keys.sort();

@@ -44,24 +44,34 @@ void ruby_load_font(Font* font, char* path) {
     VALUE rb_texture_name = ruby_hash_get(rb_page, 0);
     //Load glyph data
     VALUE rb_glyph_info;
+
     Glyph glyph;
+    GLfloat scaleW = (GLfloat)NUM2INT(ruby_hash_get(rb_common, "scaleW"));
+    GLfloat scaleH = (GLfloat)NUM2INT(ruby_hash_get(rb_common, "scaleH"));
+    GLfloat font_size = (GLfloat)NUM2INT(ruby_hash_get(rb_info, "size"));
+
     int glyph_count = RARRAY_LEN(rb_glyph_ids);
     for(int i = 0; i < glyph_count; i++) {
         rb_glyph_info = ruby_hash_get(rb_glyph, rb_ary_entry(rb_glyph_ids, i));
         glyph.char_id = (char)NUM2INT(ruby_hash_get(rb_glyph_info, "id"));
-        glyph.size = glm::vec2(
-            (GLfloat)RFLOAT_VALUE(ruby_hash_get(rb_glyph_info, "width")),
-            (GLfloat)RFLOAT_VALUE(ruby_hash_get(rb_glyph_info, "height")) );
-        glyph.center = glm::vec2(
-            (GLfloat)RFLOAT_VALUE(ruby_hash_get(rb_glyph_info, "x")),
-            (GLfloat)RFLOAT_VALUE(ruby_hash_get(rb_glyph_info, "y")) );
-        glyph.advance = glm::vec2(
-            (GLfloat)RFLOAT_VALUE(ruby_hash_get(rb_glyph_info, "xadvance")),
-            0.0f );
+        glyph.uv_info = glm::vec4(
+            NUM2INT(ruby_hash_get(rb_glyph_info, "x"))/scaleW,
+            NUM2INT(ruby_hash_get(rb_glyph_info, "y"))/scaleH,
+            NUM2INT(ruby_hash_get(rb_glyph_info, "width"))/scaleW,
+            NUM2INT(ruby_hash_get(rb_glyph_info, "height"))/scaleH );
+        glyph.offset = glm::vec3(
+            NUM2INT(ruby_hash_get(rb_glyph_info, "xoffset"))/font_size,
+            -1.0*NUM2INT(ruby_hash_get(rb_glyph_info, "yoffset"))/font_size, 0.0f);
+        glyph.size = glm::vec3(
+            NUM2INT(ruby_hash_get(rb_glyph_info, "width"))/font_size,
+            NUM2INT(ruby_hash_get(rb_glyph_info, "height"))/font_size, 0.0f);
+        glyph.advance = glm::vec3(
+            NUM2INT(ruby_hash_get(rb_glyph_info, "xadvance"))/font_size, 0.0f,
+            0.0f);
         font->glyphs[glyph.char_id] = glyph;
     }
 
     //Load texture page data
     font->page->asset_path = construct_asset_path("fonts",
-        StringValueCStr(rb_texture_name), "");
+        StringValueCStr(rb_texture_name));
 }

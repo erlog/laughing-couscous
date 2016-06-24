@@ -35,6 +35,14 @@ char* str_lit(const char* string) {
     return result;
 }
 
+char* construct_asset_path(const char* folder, const char* filename) {
+    //TODO: dynamically allocate appropriately sized string;
+    //TODO: decide which of these are actually const
+    char* buffer = (char*)walloc(sizeof(char)*255);
+    snprintf(buffer, 254, "%s/%s/%s", AssetFolderPath, folder,
+        filename);
+    return buffer;
+}
 char* construct_asset_path(const char* folder, const char* filename,
         const char* file_extension) {
     //TODO: dynamically allocate appropriately sized string;

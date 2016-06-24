@@ -4,12 +4,14 @@ add real lighting
 come up with a level format
     status: began implementing octree-based geometry indexing, slow going
 decide on a proper string format
-    status: not started
+    status: added ICU to the project, but haven't really moved over to it yet
 generalize key input for later rebinding
     status: not started
 alt-tab support
     status: investigated and found nothing, ALT-TAB keystrokes are being
             eaten while I have mouse focus
 collision
-    status: did some studying
-    gravity: ray cast down to see if the player is supported, move the player to that level of support
+    status: rudimentary and bad collision is in, but it's buggy and doesn't use
+            octrees
+    gravity: ray cast down to see if the player is supported, move the player
+             to that level of support

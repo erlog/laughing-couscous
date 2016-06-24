@@ -134,14 +134,14 @@ typedef struct c_glyph {
     //TODO: Unicode!
     char char_id;
     GLuint page_id;
-    glm::vec2 center; //center of the actual character within bounding box
-    glm::vec2 size;   //size of the actual character within bounding box
-    glm::vec2 advance; //amount to advance pen by after drawing glyph
+    glm::vec4 uv_info; //(UV space) top left coord and size
+    glm::vec3 size;    //(Glyph space) size of the character
+    glm::vec3 offset;  //(Glyph space) new center of the character
+    glm::vec3 advance; //(Glyph space) amount to advance pen by after drawing
 } Glyph;
 
 typedef struct c_font {
     char* asset_path;
-    FT_Face face;
     GLfloat size;
     Texture* page;
     Object* quad;
@@ -235,7 +235,6 @@ typedef struct c_state {
     uint32_t FrameCounter;
     uint32_t LastFPSUpdateTime;
     Game_Input* Input;
-    FT_Library FreeType_Library;
     Object* Debug_Cube;
     Object* Debug_Sphere;
     Object* Player;

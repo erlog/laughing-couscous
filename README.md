@@ -3,9 +3,6 @@ Library and Licensing Information
 SDL2.0 used under the zlib license.
     https://www.libsdl.org/license.php
 
-Freetype2 used under the FTL.
-    https://www.freetype.org/license.html
-
 GLEW used under: http://glew.sourceforge.net/glew.txt
     The OpenGL Extension Wrangler Library
     Copyright (C) 2008-2016, Nigel Stewart <nigels[]users sourceforge net>

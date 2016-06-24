@@ -80,35 +80,39 @@ void gl_toggle_wireframe(bool on) {
     else { glPolygonMode( GL_FRONT_AND_BACK, GL_FILL); }
 }
 
-void gl_bind_mat(GLuint shader, glm::mat4 matrix, const char* variable) {
+bool gl_bind_mat(GLuint shader, glm::mat4 matrix, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+        return true;
     }
-    return;
+    return false;
 }
-void gl_bind_mat(GLuint shader, glm::mat3 matrix, const char* variable) {
+bool gl_bind_mat(GLuint shader, glm::mat3 matrix, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+        return true;
     }
-    return;
+    return false;
 }
 
-void gl_bind_vec(GLuint shader, glm::vec3 vector, const char* variable) {
+bool gl_bind_vec(GLuint shader, glm::vec3 vector, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniform3fv(loc, 1, glm::value_ptr(vector));
+        return true;
     }
-    return;
+    return false;
 }
 
-void gl_bind_vec(GLuint shader, glm::vec4 vector, const char* variable) {
+bool gl_bind_vec(GLuint shader, glm::vec4 vector, const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniform4fv(loc, 1, glm::value_ptr(vector));
+        return true;
     }
-    return;
+    return false;
 }
 
 void gl_register_texture(Texture* texture) {
@@ -123,15 +127,16 @@ void gl_register_texture(Texture* texture) {
 }
 
 
-void gl_bind_texture(GLuint shader, GLuint texture_id, GLuint slot,
+bool gl_bind_texture(GLuint shader, GLuint texture_id, GLuint slot,
     const char* variable) {
     GLint loc = glGetUniformLocation(shader, variable);
     if(loc != -1) {
         glUniform1i(loc, slot);
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, texture_id);
+        return true;
     }
-    return;
+    return false;
 }
 
 void gl_fast_draw_vao(Scene_Camera* camera, Object* object, glm::vec3 position,
@@ -162,23 +167,6 @@ inline glm::mat4 build_model_matrix(Object* object) {
 }
 
 #if 0
-inline Glyph load_glyph(Font* font, char character) {
-    //checks if already in cache and generates if it's not
-    if(font->glyphs.find(character) == font->glyphs.end()) {
-        message_log("Rendering glyph-", character);
-        FT_Load_Char(font->face, character, FT_LOAD_RENDER);
-        Glyph glyph; FT_Glyph ft_glyph; FT_BBox bbox;
-
-        //Get glyph object and ask for the bounding box
-        FT_Get_Glyph(font->face->glyph, &ft_glyph);
-        FT_Glyph_Get_CBox(ft_glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
-
-        glGenTextures(1, &glyph.texture_id);
-        glBindTexture(GL_TEXTURE_2D, glyph.texture_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->face->glyph->bitmap.width,
-            font->face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE,
-            font->face->glyph->bitmap.buffer);
-
         //Set texture options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -196,55 +184,44 @@ inline Glyph load_glyph(Font* font, char character) {
             font->face->glyph->advance.x/(font->size*64.0f),
             font->face->glyph->advance.y/(font->size*64.0f));
         glyph.advance -= glyph.center; //precalculate advance from center
-
-        font->glyphs[character] = glyph;
-        FT_Done_Glyph(ft_glyph);
-        return glyph;
-
-    } else {
-        return font->glyphs[character];
-    }
-}
+#endif
 
 void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
     GLfloat size) {
-    Glyph glyph = load_glyph(font, character);
-    font->quad->model->scale.x = glyph.size.x * size;
-    font->quad->model->scale.y = glyph.size.y * size;
-    font->quad->model->scale.z = 1.0f;
+
+    Glyph glyph = font->glyphs[character];
+    font->quad->model->scale = glyph.size * size;
 
     //move from edge of bounding box to center
-    font->quad->physics->position.x += (glyph.center.x * size);
-    font->quad->physics->position.y += (glyph.center.y * size);
+    font->quad->physics->position -= (glyph.offset * size);
 
     glm::mat4 model_matrix = build_model_matrix(font->quad);
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
-    gl_bind_mat(font->quad->shader->id, model_view_projection, "model_view_projection");
-    gl_bind_texture(font->quad->shader->id, glyph.texture_id, 0, "diffuse");
 
+    bool bound =
+    gl_bind_mat(font->quad->shader->id, model_view_projection, "model_view_projection");
+    if(!bound) { message_log("failed to bind-", "model_view_projection"); }
+    bound = gl_bind_vec(font->quad->shader->id, glyph.uv_info, "char_info");
+    if(!bound) { message_log("failed to bind-", "char_info"); }
     glDrawArrays(GL_TRIANGLES, 0, font->quad->model->face_count*3);
 
-    //move from center to right edge of the glyph based on
-    //the precalculated advance from the center
-    font->quad->physics->position.x += (glyph.advance.x * size);
-    font->quad->physics->position.y += (glyph.advance.y * size);
+    font->quad->physics->position += (glyph.offset * size);
+    font->quad->physics->position.x += 40.0f;
 }
-
-#endif
 
 void gl_draw_text(Scene_Camera* camera, Font* font, const char* text,
     GLfloat size) {
-    glUseProgram(font->quad->shader->id);
-    #if 0
-    glm::vec3 start_position = font->quad->physics->position;
     glBindVertexArray(font->quad->vao);
+    glUseProgram(font->quad->shader->id);
+    glm::vec3 start_position = font->quad->physics->position;
+    gl_bind_texture(font->quad->shader->id, font->page->id, 0, "diffuse");
     size_t length = strlen(text);
     for(size_t i = 0; i < length; i++) {
         gl_draw_font_glyph(camera, font, text[i], size);
     }
     font->quad->physics->position = start_position;
-    #endif
     glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 void gl_draw_object(Scene_Camera* camera, Object* object) {

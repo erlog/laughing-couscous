@@ -146,11 +146,6 @@ int main() {
     load_level(state->Level, "test_level");
     //octree_print(&state->Level->octree->root);
 
-    //Fonts
-    if(FT_Init_FreeType(&state->FreeType_Library)) {
-        message_log("Failed to load FreeType");
-    }
-
     Font test_font;
     load_font(&test_font, "ComicSans");
 
@@ -229,7 +224,7 @@ int main() {
             }
 
             //draw level
-            gl_draw_object(state->Camera, state->Level->geometry);
+            //gl_draw_object(state->Camera, state->Level->geometry);
             //octree_debug_draw(state->Level->octree, state);
 
 
@@ -245,21 +240,21 @@ int main() {
             }
             //face model in direction of movement
             physics_face_movement_direction(state->Player);
-            gl_draw_object(state->Camera, state->Player);
+            //gl_draw_object(state->Camera, state->Player);
 
             //draw bounding sphere
             state->Debug_Cube->physics->position = state->Player->physics->position;
             state->Debug_Cube->model->scale = state->Player->physics->radii * 2.0f;
             state->Debug_Cube->model->rotation = state->Player->model->rotation;
             gl_toggle_wireframe(true);
-            gl_draw_object(state->Camera, state->Debug_Cube);
+            //gl_draw_object(state->Camera, state->Debug_Cube);
             gl_toggle_wireframe(false);
 
 
             //draw test text
             //TODO: make this an FPS counter
-            //test_font.quad->physics->position = glm::vec3(5.0f, 5.0f, 0.0f);
-            //gl_draw_text(&screen_camera, &test_font, "#sa gamedev", 32.0f);
+            test_font.quad->physics->position = glm::vec3(32.0f, 32.0f, 0.0f);
+            gl_draw_text(&screen_camera, &test_font, "#sa gamedev", 32.0f);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;
