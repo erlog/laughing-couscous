@@ -253,8 +253,8 @@ int main() {
 
             //draw test text
             //TODO: make this an FPS counter
-            test_font.quad->physics->position = glm::vec3(32.0f, 32.0f, 0.0f);
-            gl_draw_text(&screen_camera, &test_font, "#sa gamedev", 32.0f);
+            test_font.quad->physics->position = glm::vec3(128.0f, 128.0f, 0.0f);
+            gl_draw_text(&screen_camera, &test_font, "#sa_gamedev", 72.0f);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

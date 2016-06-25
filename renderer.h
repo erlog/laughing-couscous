@@ -82,9 +82,9 @@
 
 //Other Libraries
     //ICU - International Components for Unicode
-    #include <unicode/utypes.h>
-    #include <unicode/putil.h>
-    #include <unicode/ustdio.h>
+    //#include <unicode/utypes.h>
+    //#include <unicode/putil.h>
+    //#include <unicode/ustdio.h>
 
     //GLEW - OpenGL Extension Wrangler
     #include <GL/glew.h>

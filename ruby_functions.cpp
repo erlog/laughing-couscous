@@ -61,13 +61,17 @@ void ruby_load_font(Font* font, char* path) {
             NUM2INT(ruby_hash_get(rb_glyph_info, "height"))/scaleH );
         glyph.offset = glm::vec3(
             NUM2INT(ruby_hash_get(rb_glyph_info, "xoffset"))/font_size,
-            -1.0*NUM2INT(ruby_hash_get(rb_glyph_info, "yoffset"))/font_size, 0.0f);
+            NUM2INT(ruby_hash_get(rb_glyph_info, "yoffset"))/font_size, 0.0f);
         glyph.size = glm::vec3(
             NUM2INT(ruby_hash_get(rb_glyph_info, "width"))/font_size,
             NUM2INT(ruby_hash_get(rb_glyph_info, "height"))/font_size, 0.0f);
         glyph.advance = glm::vec3(
             NUM2INT(ruby_hash_get(rb_glyph_info, "xadvance"))/font_size, 0.0f,
             0.0f);
+
+        DEBUG_LOG(glyph.offset);
+        //pre-compute values for our renderer
+
         font->glyphs[glyph.char_id] = glyph;
     }
 

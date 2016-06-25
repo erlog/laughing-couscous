@@ -5,50 +5,51 @@
 
 def load_font_info(dict, line)
     dict["face"] = line.slice(/face=\"(?<grp>.+?)"/, "grp");
-    dict["size"] = line.slice(/size=(?<grp>\d+)\s/, "grp").to_i;
-    dict["bold"] = line.slice(/bold=(?<grp>\d+)\s/, "grp").to_i;
-    dict["italic"] = line.slice(/italic=(?<grp>\d+)\s/, "grp").to_i;
+    dict["size"] = line.slice(/size=(?<grp>.+?)\s/, "grp").to_i;
+    dict["bold"] = line.slice(/bold=(?<grp>.+?)\s/, "grp").to_i;
+    dict["italic"] = line.slice(/italic=(?<grp>.+?)\s/, "grp").to_i;
     dict["charset"] = line.slice(/charset=\"(?<grp>.+?)"/, "grp");
-    dict["unicode"] = line.slice(/unicode=(?<grp>\d+)\s/, "grp").to_i;
-    dict["stretchH"] = line.slice(/stretchH=(?<grp>\d+)\s/, "grp").to_i;
-    dict["smooth"] = line.slice(/smooth=(?<grp>\d+)\s/, "grp").to_i;
-    dict["aa"] = line.slice(/aa=(?<grp>\d+)\s/, "grp").to_i;
+    dict["unicode"] = line.slice(/unicode=(?<grp>.+?)\s/, "grp").to_i;
+    dict["stretchH"] = line.slice(/stretchH=(?<grp>.+?)\s/, "grp").to_i;
+    dict["smooth"] = line.slice(/smooth=(?<grp>.+?)\s/, "grp").to_i;
+    dict["aa"] = line.slice(/aa=(?<grp>.+?)\s/, "grp").to_i;
     dict["padding"] = line.slice(/padding=(?<grp>.+?)\s/, "grp").split(",").map!(&:to_i);
     dict["spacing"] = line.slice(/spacing=(?<grp>.+?)\s/, "grp").split(",").map!(&:to_i);
-    dict["outline"] = line.slice(/outline=(?<grp>\d+)\s/, "grp").to_i;
+    dict["outline"] = line.slice(/outline=(?<grp>.+?)\s/, "grp").to_i;
 end
 
 def load_font_common(dict, line)
-    dict["lineHeight"] = line.slice(/lineHeight=(?<grp>\d+)\s/, "grp").to_i;
-    dict["base"] = line.slice(/base=(?<grp>\d+)\s/, "grp").to_i;
-    dict["scaleW"] = line.slice(/scaleW=(?<grp>\d+)\s/, "grp").to_i;
-    dict["scaleH"] = line.slice(/scaleH=(?<grp>\d+)\s/, "grp").to_i;
-    dict["pages"] = line.slice(/pages=(?<grp>\d+)\s/, "grp").to_i;
-    dict["packed"] = line.slice(/packed=(?<grp>\d+)\s/, "grp").to_i;
-    dict["alphaChnl"] = line.slice(/alphaChnl=(?<grp>\d+)\s/, "grp").to_i;
-    dict["redChnl"] = line.slice(/redChnl=(?<grp>\d+)\s/, "grp").to_i;
-    dict["greenChnl"] = line.slice(/greenChnl=(?<grp>\d+)\s/, "grp").to_i;
-    dict["blueChnl"] = line.slice(/blueChnl=(?<grp>\d+)\s/, "grp").to_i;
+    dict["lineHeight"] = line.slice(/lineHeight=(?<grp>.+?)\s/, "grp").to_i;
+    dict["base"] = line.slice(/base=(?<grp>.+?)\s/, "grp").to_i;
+    dict["scaleW"] = line.slice(/scaleW=(?<grp>.+?)\s/, "grp").to_i;
+    dict["scaleH"] = line.slice(/scaleH=(?<grp>.+?)\s/, "grp").to_i;
+    dict["pages"] = line.slice(/pages=(?<grp>.+?)\s/, "grp").to_i;
+    dict["packed"] = line.slice(/packed=(?<grp>.+?)\s/, "grp").to_i;
+    dict["alphaChnl"] = line.slice(/alphaChnl=(?<grp>.+?)\s/, "grp").to_i;
+    dict["redChnl"] = line.slice(/redChnl=(?<grp>.+?)\s/, "grp").to_i;
+    dict["greenChnl"] = line.slice(/greenChnl=(?<grp>.+?)\s/, "grp").to_i;
+    dict["blueChnl"] = line.slice(/blueChnl=(?<grp>.+?)\s/, "grp").to_i;
 end
 
 def load_font_page(dict, line)
-    id = line.slice(/id=(?<grp>\d+)\s/, "grp").to_i;
+    id = line.slice(/id=(?<grp>.+?)\s/, "grp").to_i;
     dict[id] = line.slice(/file=\"(?<grp>.+?)"/, "grp");
 end
 
 def load_font_char(dict, line)
-    id = line.slice(/id=(?<grp>\d+)\s/, "grp").to_i;
+    id = line.slice(/id=(?<grp>.+?)\s/, "grp").to_i;
     dict[id] = {};
     dict[id]["id"] = id;
-    dict[id]["x"] = line.slice(/x=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["y"] = line.slice(/y=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["width"] = line.slice(/width=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["height"] = line.slice(/height=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["xoffset"] = line.slice(/xoffset=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["yoffset"] = line.slice(/yoffset=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["xadvance"] = line.slice(/xadvance=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["page"] = line.slice(/page=(?<grp>\d+)\s/, "grp").to_i;
-    dict[id]["chnl"] = line.slice(/chnl=(?<grp>\d+)\s/, "grp").to_i;
+    dict[id]["x"] = line.slice(/x=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["y"] = line.slice(/y=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["width"] = line.slice(/width=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["height"] = line.slice(/height=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["xoffset"] = line.slice(/xoffset=(?<grp>.+?)\s/, "grp").to_i;
+    puts(dict[id]["xoffset"]);
+    dict[id]["yoffset"] = line.slice(/yoffset=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["xadvance"] = line.slice(/xadvance=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["page"] = line.slice(/page=(?<grp>.+?)\s/, "grp").to_i;
+    dict[id]["chnl"] = line.slice(/chnl=(?<grp>.+?)\s/, "grp").to_i;
 end
 
 def load_font(path)

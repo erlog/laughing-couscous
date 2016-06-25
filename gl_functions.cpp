@@ -172,18 +172,6 @@ inline glm::mat4 build_model_matrix(Object* object) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        //Get glyph metrics
-        glyph.center = glm::vec2(
-            (bbox.xMin + ( (bbox.xMax-bbox.xMin)/2.0f )) / font->size,
-            (bbox.yMin + ( (bbox.yMax-bbox.yMin)/2.0f )) / font->size);
-        glyph.size = glm::vec2(
-            font->face->glyph->bitmap.width/font->size,
-            font->face->glyph->bitmap.rows/font->size);
-        glyph.advance = glm::vec2(
-            font->face->glyph->advance.x/(font->size*64.0f),
-            font->face->glyph->advance.y/(font->size*64.0f));
-        glyph.advance -= glyph.center; //precalculate advance from center
 #endif
 
 void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
@@ -192,8 +180,12 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
     Glyph glyph = font->glyphs[character];
     font->quad->model->scale = glyph.size * size;
 
-    //move from edge of bounding box to center
-    font->quad->physics->position -= (glyph.offset * size);
+    //move from top left bounding box to top left offset
+    font->quad->physics->position.x += (glyph.offset.x * size);
+    font->quad->physics->position.y -= (glyph.offset.y * size);
+    //move from top left offset to center
+    font->quad->physics->position.x += (glyph.size.x * size * 0.5f);
+    font->quad->physics->position.y -= (glyph.size.y * size * 0.5f);
 
     glm::mat4 model_matrix = build_model_matrix(font->quad);
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
@@ -205,21 +197,28 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
     if(!bound) { message_log("failed to bind-", "char_info"); }
     glDrawArrays(GL_TRIANGLES, 0, font->quad->model->face_count*3);
 
-    font->quad->physics->position += (glyph.offset * size);
-    font->quad->physics->position.x += 40.0f;
+    //move from center to top left offset
+    font->quad->physics->position.x -= (glyph.offset.x * size);
+    font->quad->physics->position.y += (glyph.offset.y * size);
+    //move from top left offset to top left bounding box
+    font->quad->physics->position.x -= (glyph.size.x * size * 0.5f);
+    font->quad->physics->position.y += (glyph.size.y * size * 0.5f);
+
+    //advance to next character position
+    font->quad->physics->position.x += (glyph.advance.x * size);
 }
 
 void gl_draw_text(Scene_Camera* camera, Font* font, const char* text,
     GLfloat size) {
     glBindVertexArray(font->quad->vao);
     glUseProgram(font->quad->shader->id);
-    glm::vec3 start_position = font->quad->physics->position;
+    glDisable(GL_DEPTH_TEST); glDisable(GL_CULL_FACE);
     gl_bind_texture(font->quad->shader->id, font->page->id, 0, "diffuse");
     size_t length = strlen(text);
     for(size_t i = 0; i < length; i++) {
         gl_draw_font_glyph(camera, font, text[i], size);
     }
-    font->quad->physics->position = start_position;
+    glEnable(GL_DEPTH_TEST); glEnable(GL_CULL_FACE);
     glBindVertexArray(0);
     glUseProgram(0);
 }
