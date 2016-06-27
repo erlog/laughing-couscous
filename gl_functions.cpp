@@ -180,29 +180,18 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
     Glyph glyph = font->glyphs[character];
     font->quad->model->scale = glyph.size * size;
 
-    //move from top left bounding box to top left offset
-    font->quad->physics->position.x += (glyph.offset.x * size);
-    font->quad->physics->position.y -= (glyph.offset.y * size);
-    //move from top left offset to center
-    font->quad->physics->position.x += (glyph.size.x * size * 0.5f);
-    font->quad->physics->position.y -= (glyph.size.y * size * 0.5f);
+    //move to center of glyph
+    font->quad->physics->position += (glyph.offset * size);
 
+    //draw
     glm::mat4 model_matrix = build_model_matrix(font->quad);
     glm::mat4 model_view_projection = camera->projection * camera->view * model_matrix;
-
-    bool bound =
     gl_bind_mat(font->quad->shader->id, model_view_projection, "model_view_projection");
-    if(!bound) { message_log("failed to bind-", "model_view_projection"); }
-    bound = gl_bind_vec(font->quad->shader->id, glyph.uv_info, "char_info");
-    if(!bound) { message_log("failed to bind-", "char_info"); }
+    gl_bind_vec(font->quad->shader->id, glyph.uv_info, "char_info");
     glDrawArrays(GL_TRIANGLES, 0, font->quad->model->face_count*3);
 
-    //move from center to top left offset
-    font->quad->physics->position.x -= (glyph.offset.x * size);
-    font->quad->physics->position.y += (glyph.offset.y * size);
-    //move from top left offset to top left bounding box
-    font->quad->physics->position.x -= (glyph.size.x * size * 0.5f);
-    font->quad->physics->position.y += (glyph.size.y * size * 0.5f);
+    //move back to outside edge of glyph
+    font->quad->physics->position -= (glyph.offset * size);
 
     //advance to next character position
     font->quad->physics->position.x += (glyph.advance.x * size);

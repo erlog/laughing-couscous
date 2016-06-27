@@ -45,7 +45,6 @@ def load_font_char(dict, line)
     dict[id]["width"] = line.slice(/width=(?<grp>.+?)\s/, "grp").to_i;
     dict[id]["height"] = line.slice(/height=(?<grp>.+?)\s/, "grp").to_i;
     dict[id]["xoffset"] = line.slice(/xoffset=(?<grp>.+?)\s/, "grp").to_i;
-    puts(dict[id]["xoffset"]);
     dict[id]["yoffset"] = line.slice(/yoffset=(?<grp>.+?)\s/, "grp").to_i;
     dict[id]["xadvance"] = line.slice(/xadvance=(?<grp>.+?)\s/, "grp").to_i;
     dict[id]["page"] = line.slice(/page=(?<grp>.+?)\s/, "grp").to_i;
