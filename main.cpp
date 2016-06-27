@@ -147,7 +147,7 @@ int main() {
     //octree_print(&state->Level->octree->root);
 
     Font test_font;
-    load_font(&test_font, "ComicSans");
+    load_font(&test_font, "DroidSans");
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
     message_log("Starting update loop.", "");

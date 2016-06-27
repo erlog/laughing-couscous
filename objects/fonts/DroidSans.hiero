@@ -1,0 +1,27 @@
+font.name=Droid Sans Fallback
+font.size=32
+font.bold=false
+font.italic=false
+font.gamma=1.8
+font.mono=false
+
+font2.file=
+font2.use=false
+
+pad.top=5
+pad.right=5
+pad.bottom=5
+pad.left=5
+pad.advance.x=-10
+pad.advance.y=-10
+
+glyph.native.rendering=false
+glyph.page.width=1024
+glyph.page.height=1024
+glyph.text=ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n1234567890\n "!`?'.,;:()[]{}<>|/@\^$-%+=#_&~*\n微研
+
+effect.class=com.badlogic.gdx.tools.hiero.unicodefont.effects.DistanceFieldEffect
+effect.Color=ffffff
+effect.Scale=16
+effect.Spread=5.0
+
