@@ -2,7 +2,7 @@
 
 int main() {
     //DEBUG: ICU TESTING
-    //UChar* test_uchar = (UChar*)walloc(sizeof(UChar));
+    char* my_text_string = "testing 微研"
 
     //INITIALIZATION- Failures here cause a hard exit
     Memory_Info mem_info = {0}; Global_State = &mem_info;
