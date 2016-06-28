@@ -146,7 +146,7 @@ typedef struct c_font {
     Texture* page;
     Object* quad;
     //TODO: Unicode!
-    std::unordered_map<UChar, Glyph> glyphs;
+    std::unordered_map<UChar32, Glyph> glyphs;
 } Font;
 
 //Levels
