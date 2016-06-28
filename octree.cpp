@@ -118,8 +118,6 @@ void octree_from_level(Game_Level* level) {
         level->collision_model->bounding_maximum,
         level->collision_model->bounding_minimum);
     GLfloat largest_radius = ceilf(vector_max_component(model_size))/2.0f;
-    DEBUG_LOG(model_size);
-    DEBUG_LOG(largest_radius);
 
     Octree* octree = (Octree*)walloc(sizeof(Octree));
     level->octree = octree;

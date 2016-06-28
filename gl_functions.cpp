@@ -174,7 +174,7 @@ inline glm::mat4 build_model_matrix(Object* object) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #endif
 
-void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
+void gl_draw_font_glyph(Scene_Camera* camera, Font* font, UChar character,
     GLfloat size) {
 
     Glyph glyph = font->glyphs[character];
@@ -197,14 +197,14 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, char character,
     font->quad->physics->position.x += (glyph.advance.x * size);
 }
 
-void gl_draw_text(Scene_Camera* camera, Font* font, const char* text,
+void gl_draw_text(Scene_Camera* camera, Font* font, UChar* text,
     GLfloat size) {
     glBindVertexArray(font->quad->vao);
     glUseProgram(font->quad->shader->id);
     glDisable(GL_DEPTH_TEST); glDisable(GL_CULL_FACE);
     gl_bind_texture(font->quad->shader->id, font->page->id, 0, "diffuse");
-    size_t length = strlen(text);
-    for(size_t i = 0; i < length; i++) {
+    int32_t length = u_strlen(text);
+    for(int32_t i = 0; i < length; i++) {
         gl_draw_font_glyph(camera, font, text[i], size);
     }
     glEnable(GL_DEPTH_TEST); glEnable(GL_CULL_FACE);

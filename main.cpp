@@ -1,17 +1,28 @@
 #include "main.h"
 
 int main() {
-    //DEBUG: ICU TESTING
-    char* my_text_string = "testing 微研"
-
     //INITIALIZATION- Failures here cause a hard exit
+    //Start Ruby
+    ruby_setup_environment(); //VALUE rb_update_func = rb_intern("ruby_update");
+
+    //Initialize State & Debug Memory Manager
     Memory_Info mem_info = {0}; Global_State = &mem_info;
     State* state = (State*)walloc(sizeof(State));
+
+    //Load global strings
+    String_DB _string_db;
+    state->Strings = &_string_db;
+    load_strings(state->Strings, "english");
+
+    //Initialize game input
     state->Input = (Game_Input*)walloc(sizeof(Game_Input));
     clear_input(state->Input);
-    state->IsRunning = true;
-    state->IsPaused = true; //Pause will be toggled when our window gains focus
+
+    //Load global settings file
     load_settings(state);
+
+    state->IsRunning = true; //Set this to false to exit after one frame
+    state->IsPaused = true; //Pause will be toggled when our window gains focus
 
     //DEBUG: Initialize rand()
     //TODO: remove this
@@ -28,9 +39,6 @@ int main() {
     state->Screen->buffer_size = state->Screen->pitch * state->Screen->height;
     state->Screen->buffer = (uint8_t*)walloc(state->Screen->buffer_size);
 
-    //Start Ruby
-    ruby_setup_render_environment();
-    //VALUE rb_update_func = rb_intern("ruby_update");
 
     //Initialize SDL and OpenGL
     SDL_Event event;
@@ -147,6 +155,7 @@ int main() {
     //octree_print(&state->Level->octree->root);
 
     Font test_font;
+    UChar* test_text = UChar_convert("#testing, unicode, 微研");
     load_font(&test_font, "DroidSans");
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
@@ -254,7 +263,7 @@ int main() {
             //draw test text
             //TODO: make this an FPS counter
             test_font.quad->physics->position = glm::vec3(0.0f, 16.0f, 0.0f);
-            gl_draw_text(&screen_camera, &test_font, "#sa g'amedev", 32.0f);
+            gl_draw_text(&screen_camera, &test_font, test_text, 32.0f);
 
             SDL_GL_SwapWindow(window);
             state->LastUpdateTime = state->GameTime;

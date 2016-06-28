@@ -179,3 +179,4 @@ bool load_level(Game_Level* level, const char* level_name) {
     octree_from_level(level);
     return true;
 }
+

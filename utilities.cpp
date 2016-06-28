@@ -28,7 +28,22 @@ glm::vec4 rgb_to_vector(uint8_t r, uint8_t g, uint8_t b) {
     return glm::vec4(r/255.f, g/255.f, b/255.f, 1.f);
 }
 
-char* str_lit(const char* string) {
+inline UChar* UChar_convert(char* string) {
+    //TODO: error handling
+    //ask how long buffer should be
+    int32_t buffer_length = 0;
+    UErrorCode icu_error = U_ZERO_ERROR;
+    u_strFromUTF8(NULL, 0, &buffer_length, string, -1, &icu_error);
+    buffer_length += 1; //for null termination
+
+    //convert string
+    icu_error = U_ZERO_ERROR;
+    UChar* icu_string = (UChar*)walloc(sizeof(UChar)*buffer_length);
+    u_strFromUTF8(icu_string, buffer_length, NULL, string, -1, &icu_error);
+    return icu_string;
+}
+
+inline char* str_lit(const char* string) {
     int length = strlen(string) + 1;
     char* result = (char *)walloc(sizeof(char)*length);
     strcpy(result, string);

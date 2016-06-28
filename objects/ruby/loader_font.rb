@@ -37,18 +37,20 @@ def load_font_page(dict, line)
 end
 
 def load_font_char(dict, line)
-    id = line.slice(/id=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id] = {};
-    dict[id]["id"] = id;
-    dict[id]["x"] = line.slice(/x=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["y"] = line.slice(/y=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["width"] = line.slice(/width=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["height"] = line.slice(/height=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["xoffset"] = line.slice(/xoffset=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["yoffset"] = line.slice(/yoffset=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["xadvance"] = line.slice(/xadvance=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["page"] = line.slice(/page=(?<grp>.+?)\s/, "grp").to_i;
-    dict[id]["chnl"] = line.slice(/chnl=(?<grp>.+?)\s/, "grp").to_i;
+    char = {};
+    #grab the char id and convert it to an actual Unicode char
+    char["id"] = line.slice(/id=(?<grp>.+?)\s/, "grp").to_i;
+    #grab the rest of the information
+    char["x"] = line.slice(/x=(?<grp>.+?)\s/, "grp").to_i;
+    char["y"] = line.slice(/y=(?<grp>.+?)\s/, "grp").to_i;
+    char["width"] = line.slice(/width=(?<grp>.+?)\s/, "grp").to_i;
+    char["height"] = line.slice(/height=(?<grp>.+?)\s/, "grp").to_i;
+    char["xoffset"] = line.slice(/xoffset=(?<grp>.+?)\s/, "grp").to_i;
+    char["yoffset"] = line.slice(/yoffset=(?<grp>.+?)\s/, "grp").to_i;
+    char["xadvance"] = line.slice(/xadvance=(?<grp>.+?)\s/, "grp").to_i;
+    char["page"] = line.slice(/page=(?<grp>.+?)\s/, "grp").to_i;
+    char["chnl"] = line.slice(/chnl=(?<grp>.+?)\s/, "grp").to_i;
+    dict["chars"] << char;
 end
 
 def load_font(path)
@@ -56,14 +58,14 @@ def load_font(path)
     dict["info"] = {};
     dict["common"] = {};
     dict["page"] = {};
-    dict["char"] = {};
+    dict["chars"] = [];
+
     open(path).readlines.each do |line|
-        load_font_info(dict["info"], line) if (line[0..3] == "info");
-        load_font_common(dict["common"], line) if (line[0..5] == "common");
-        load_font_page(dict["page"], line) if (line[0..3] == "page");
-        load_font_char(dict["char"], line) if (line[0..3] == "char");
+        load_font_info(dict["info"], line) if (line[0..4] == "info ");
+        load_font_common(dict["common"], line) if (line[0..6] == "common ");
+        load_font_page(dict["page"], line) if (line[0..4] == "page ");
+        load_font_char(dict, line) if (line[0..4] == "char ");
     end
 
-    dict["char_ids"] = dict["char"].keys.sort();
     return dict;
 end

@@ -127,6 +127,8 @@
     #include "gl_functions.cpp"
     #include "octree.cpp"
     #include "physics.cpp"
+    #include "loader_string.cpp"
+    #include "loader_font.cpp"
     #include "loader_model.cpp"
     #include "loader_ini.cpp"
     #include "loaders.cpp"

@@ -132,7 +132,7 @@ void wfree_camera(Scene_Camera* camera) {
 //Text
 typedef struct c_glyph {
     //TODO: Unicode!
-    char char_id;
+    UChar char_id;
     GLuint page_id;
     glm::vec4 uv_info; //(UV space) top left coord and size
     glm::vec3 size;    //(Glyph space) size of the character
@@ -146,7 +146,7 @@ typedef struct c_font {
     Texture* page;
     Object* quad;
     //TODO: Unicode!
-    std::unordered_map<char, Glyph> glyphs;
+    std::unordered_map<UChar, Glyph> glyphs;
 } Font;
 
 //Levels
@@ -201,6 +201,11 @@ void wfree_game_level(Game_Level* level) {
     return;
 }
 
+typedef struct c_strings_db {
+    char* asset_path;
+    std::unordered_map<int, UChar*> db;
+} String_DB;
+
 //Game State
 typedef struct c_settings {
     uint32_t horizontal_resolution;
@@ -239,6 +244,7 @@ typedef struct c_state {
     Object* Debug_Sphere;
     Object* Player;
     Object* Objects;
+    String_DB* Strings;
     int ObjectCount;
     Game_Level* Level;
     int StaticObjectCount;
