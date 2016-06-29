@@ -149,6 +149,20 @@ bool load_object(Object* object, const char* model_name,
     return true;
 }
 
+//Levels
+bool load_level(Game_Level* level, const char* level_name) {
+    level->asset_path = str_lit("level_name");
+    level->geometry = (Object*)walloc(sizeof(Object));
+    load_object(level->geometry, level_name,
+        "checkerboard", "blank_nm_1024", "checkerboard_spec", "shader");
+    level->geometry->model->color = rgb_to_vector(0x13, 0x88, 0x88);
+    level->collision_model = (Collision_Model*)walloc(sizeof(Collision_Model));
+    level->last_collision = glm::vec3(0.f, 0.f, 0.f);
+    load_collision_mesh(level->collision_model, level_name);
+    octree_from_level(level);
+    return true;
+}
+
 //Fonts
 bool load_font(Font* font, const char* font_name) {
     font->asset_path = construct_asset_path("fonts", font_name, "fnt");
@@ -165,18 +179,3 @@ bool load_font(Font* font, const char* font_name) {
     }
     return true;
 }
-
-//Levels
-bool load_level(Game_Level* level, const char* level_name) {
-    level->asset_path = str_lit("level_name");
-    level->geometry = (Object*)walloc(sizeof(Object));
-    load_object(level->geometry, level_name,
-        "checkerboard", "blank_nm_1024", "checkerboard_spec", "shader");
-    level->geometry->model->color = rgb_to_vector(0x13, 0x88, 0x88);
-    level->collision_model = (Collision_Model*)walloc(sizeof(Collision_Model));
-    level->last_collision = glm::vec3(0.f, 0.f, 0.f);
-    load_collision_mesh(level->collision_model, level_name);
-    octree_from_level(level);
-    return true;
-}
-

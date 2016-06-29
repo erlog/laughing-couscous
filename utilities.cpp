@@ -51,19 +51,32 @@ inline char* str_lit(const char* string) {
 }
 
 char* construct_asset_path(const char* folder, const char* filename) {
-    //TODO: dynamically allocate appropriately sized string;
-    //TODO: decide which of these are actually const
-    char* buffer = (char*)walloc(sizeof(char)*255);
-    snprintf(buffer, 254, "%s/%s/%s", AssetFolderPath, folder,
+    char* format_string = "%s/%s/%s";
+    //compute appropriate length
+    size_t length = strlen(format_string);
+    length += strlen(AssetFolderPath);
+    length += strlen(folder);
+    length += strlen(filename);
+    length += 1;
+    //build string
+    char* buffer = (char*)walloc(sizeof(char)*length);
+    snprintf(buffer, length, format_string, AssetFolderPath, folder,
         filename);
     return buffer;
 }
 char* construct_asset_path(const char* folder, const char* filename,
         const char* file_extension) {
-    //TODO: dynamically allocate appropriately sized string;
-    //TODO: decide which of these are actually const
-    char* buffer = (char*)walloc(sizeof(char)*255);
-    snprintf(buffer, 254, "%s/%s/%s.%s", AssetFolderPath, folder,
+    char* format_string = "%s/%s/%s.%s";
+    //compute appropriate length
+    size_t length = strlen(format_string);
+    length += strlen(AssetFolderPath);
+    length += strlen(folder);
+    length += strlen(filename);
+    length += strlen(file_extension);
+    length += 1;
+    //build string
+    char* buffer = (char*)walloc(sizeof(char)*length);
+    snprintf(buffer, length, format_string, AssetFolderPath, folder,
         filename, file_extension);
     return buffer;
 }
@@ -74,7 +87,9 @@ char* get_datetime_string() {
 
     int output_length = 16;
     char* output = (char*)walloc(sizeof(char)*output_length);
-    while(strftime(output, output_length,"%Y-%m-%d %H:%M:%S", info) == 0) {
+
+    char* date_format = "%Y-%m-%d %H:%M:%S";
+    while(strftime(output, output_length, date_format, info) == 0) {
         wfree(output);
         output_length *= 2;
         output = (char*)walloc(sizeof(char)*output_length);

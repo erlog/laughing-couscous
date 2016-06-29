@@ -29,7 +29,7 @@ void ruby_load_font(Font* font, char* path) {
     for(int i = 0; i < glyph_count; i++) {
         rb_glyph_info = rb_ary_entry(rb_glyph_array, i);
         id = FIX2UINT(ruby_hash_get(rb_glyph_info, "id"));
-        glyph.char_id = (UChar)id;
+        glyph.char_id = (UChar32)id;
 
         glyph.uv_info = glm::vec4(
             ruby_hash_get_int(rb_glyph_info, "x")/scaleW,
@@ -67,3 +67,4 @@ void ruby_load_font(Font* font, char* path) {
     font->page->asset_path = construct_asset_path("fonts",
         StringValueCStr(rb_texture_name));
 }
+

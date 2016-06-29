@@ -41,7 +41,9 @@
         size_t real_size = malloc_size(pointer);
         Global_State->MemoryAllocated += real_size;
         #if MEMORY_LOGGING
-            printf("%lu B Allocated (%s)\n", real_size, label);
+        if(real_size > 0) {
+            printf("%lu B + Allocated (%s)\n", real_size, label);
+        }
         #endif
         return pointer;
     }
@@ -50,13 +52,17 @@
         size_t real_size = malloc_size(pointer);
         Global_State->MemoryAllocated -= real_size;
         #if MEMORY_LOGGING
-            printf("%lu B Deallocated (%s)\n", real_size, label);
+        if(real_size > 0) {
+            printf("%lu B - (%s)\n", real_size, label);
+        }
         #endif
         void* new_pointer = realloc(pointer, new_size);
         real_size = malloc_size(new_pointer);
         Global_State->MemoryAllocated += real_size;
         #if MEMORY_LOGGING
-            printf("%lu B Allocated (%s)\n", real_size, label);
+        if(real_size > 0) {
+            printf("%lu B + (%s)\n", real_size, label);
+        }
         #endif
         return new_pointer;
     }
@@ -65,7 +71,9 @@
         size_t real_size = malloc_size(pointer);
         Global_State->MemoryFreed += real_size;
         #if MEMORY_LOGGING
-            printf("%lu B Deallocated (%s)\n", real_size, label);
+        if(real_size > 0) {
+            printf("%lu B - (%s)\n", real_size, label);
+        }
         #endif
         free(pointer); return;
     }

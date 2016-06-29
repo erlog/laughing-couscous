@@ -23,7 +23,7 @@ void message_log(UChar* message, UChar* predicate) {
 //for the null terminator
 
 //String Conversions - Vectors
- UChar* to_str(glm::vec2 vec) {
+UChar* to_str(glm::vec2 vec) {
     const char* format_str = "(%f, %f)";
     int32_t length = u_snprintf(NULL, 0, format_str, vec.x, vec.y);
     length += strlen(format_str) + 1;
@@ -31,7 +31,7 @@ void message_log(UChar* message, UChar* predicate) {
     u_snprintf(icu_str, length, format_str, vec.x, vec.y);
     return icu_str;
 }
- UChar* to_str(glm::vec3 vec) {
+UChar* to_str(glm::vec3 vec) {
     const char* format_str = "(%f, %f, %f)";
     int32_t length = u_snprintf(NULL, 0, format_str, vec.x, vec.y, vec.z);
     length += strlen(format_str) + 1;
@@ -39,7 +39,7 @@ void message_log(UChar* message, UChar* predicate) {
     u_snprintf(icu_str, length, format_str, vec.x, vec.y, vec.z);
     return icu_str;
 }
- UChar* to_str(glm::vec4 vec) {
+UChar* to_str(glm::vec4 vec) {
     const char* format_str = "(%f, %f, %f, %f)";
     int32_t length = u_snprintf(NULL, 0, format_str, vec.x, vec.y, vec.z, vec.w);
     length += strlen(format_str) + 1;
@@ -47,7 +47,7 @@ void message_log(UChar* message, UChar* predicate) {
     u_snprintf(icu_str, length, format_str, vec.x, vec.y, vec.z, vec.w);
     return icu_str;
 }
- UChar* to_str(glm::quat vec) {
+UChar* to_str(glm::quat vec) {
     const char* format_str = "(%f, %f, %f, %f)";
     int32_t length = u_snprintf(NULL, 0, format_str, vec.x, vec.y, vec.z, vec.w);
     length += strlen(format_str) + 1;
@@ -57,35 +57,35 @@ void message_log(UChar* message, UChar* predicate) {
 }
 
 //String Conversions - Numbers
- UChar* to_str(float number) {
+UChar* to_str(float number) {
     const char* format_str = "%f";
     int32_t length = u_snprintf(NULL, 0, format_str, number);
     length += strlen(format_str) + 1;
     UChar* icu_str = (UChar*)walloc(sizeof(UChar) * length);
     u_snprintf(icu_str, length, format_str, number); return icu_str;
 }
- UChar* to_str(unsigned int number) {
+UChar* to_str(unsigned int number) {
     const char* format_str = "%u";
     int32_t length = u_snprintf(NULL, 0, format_str, number);
     length += strlen(format_str) + 1;
     UChar* icu_str = (UChar*)walloc(sizeof(UChar) * length);
     u_snprintf(icu_str, length, format_str, number); return icu_str;
 }
- UChar* to_str(long int number) {
+UChar* to_str(long int number) {
     const char* format_str = "%ld";
     int32_t length = u_snprintf(NULL, 0, format_str, number);
     length += strlen(format_str) + 1;
     UChar* icu_str = (UChar*)walloc(sizeof(UChar) * length);
     u_snprintf(icu_str, length, format_str, number); return icu_str;
 }
- UChar* to_str(int number) {
+UChar* to_str(int number) {
     const char* format_str = "%i";
     int32_t length = u_snprintf(NULL, 0, format_str, number);
     length += strlen(format_str) + 1;
     UChar* icu_str = (UChar*)walloc(sizeof(UChar) * length);
     u_snprintf(icu_str, length, format_str, number); return icu_str;
 }
- UChar* to_str(size_t number) {
+UChar* to_str(size_t number) {
     const char* format_str = "%lu Bytes";
     int32_t length = u_snprintf(NULL, 0, format_str, number);
     length += strlen(format_str) + 1;

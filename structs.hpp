@@ -13,7 +13,6 @@ typedef struct c_texture {
 void wfree_texture(Texture* texture) {
     wfree(texture->asset_path);
     wfree(texture->buffer);
-    return;
 }
 
 //3D Model
@@ -53,7 +52,6 @@ typedef struct c_model {
 void wfree_model(Model* model) {
     wfree(model->asset_path);
     wfree(model->faces);
-    return;
 }
 
 typedef struct c_collision_model {
@@ -67,7 +65,6 @@ typedef struct c_collision_model {
 void wfree_collision_model(Collision_Model* collision_model) {
     wfree(collision_model->asset_path);
     wfree(collision_model->faces);
-    return;
 }
 
 typedef struct shader {
@@ -77,7 +74,6 @@ typedef struct shader {
 
 void wfree_shader(Shader* shader) {
     wfree(shader->name);
-    return;
 }
 
 
@@ -126,13 +122,11 @@ typedef struct c_camera {
 
 void wfree_camera(Scene_Camera* camera) {
     wfree(camera->physics);
-    return;
 }
 
 //Text
 typedef struct c_glyph {
-    //TODO: Unicode!
-    UChar char_id;
+    UChar32 char_id;
     GLuint page_id;
     glm::vec4 uv_info; //(UV space) top left coord and size
     glm::vec3 size;    //(Glyph space) size of the character
@@ -145,9 +139,14 @@ typedef struct c_font {
     GLfloat size;
     Texture* page;
     Object* quad;
-    //TODO: Unicode!
     std::unordered_map<UChar32, Glyph> glyphs;
 } Font;
+
+void wfree_font(Font* font) {
+    wfree(font->asset_path);
+    wfree_texture(font->page); wfree(font->page);
+    wfree_object(font->quad); wfree(font->quad);
+}
 
 //Levels
 typedef struct c_octree_node {
@@ -171,7 +170,6 @@ void wfree_octree_node(Octree_Node* node) {
 
     wfree(node->children);
     wfree(node->faces);
-    return;
 }
 
 typedef struct c_octree {
@@ -181,7 +179,6 @@ typedef struct c_octree {
 
 void wfree_octree(Octree* octree) {
     wfree_octree_node(&octree->root);
-    return;
 }
 
 typedef struct c_level {
@@ -198,13 +195,20 @@ void wfree_game_level(Game_Level* level) {
     wfree_object(level->geometry); wfree(level->geometry);
     wfree_collision_model(level->collision_model); wfree(level->collision_model);
     wfree_octree(level->octree); wfree(level->octree);
-    return;
 }
 
 typedef struct c_strings_db {
     char* asset_path;
     std::unordered_map<int, UChar*> db;
 } String_DB;
+
+void wfree_string_db(String_DB* string_db) {
+    wfree(string_db->asset_path);
+    std::unordered_map<int, UChar*>::const_iterator itr;
+    for(itr = string_db->db.begin(); itr != string_db->db.end(); ++itr) {
+        wfree(itr->second);
+    }
+}
 
 //Game State
 typedef struct c_settings {

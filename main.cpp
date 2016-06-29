@@ -13,6 +13,7 @@ int main() {
     String_DB _string_db;
     state->Strings = &_string_db;
     load_strings(state->Strings, "english");
+    wfree_string_db(state->Strings);
 
     //Initialize game input
     state->Input = (Game_Input*)walloc(sizeof(Game_Input));
@@ -294,11 +295,13 @@ int main() {
     }
 
     take_screenshot(state);
+    wfree_font(&test_font);
+    wfree(test_text);
     wfree_state(state);
     wfree(state);
 
     ruby_cleanup(0);
-    message_log("Leaked-", mem_info.MemoryAllocated - mem_info.MemoryFreed);
+    printf("Leaked- %lu Bytes", mem_info.MemoryAllocated - mem_info.MemoryFreed);
 
     SDL_Quit();
     return 0;

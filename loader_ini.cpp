@@ -1,58 +1,21 @@
-
-//TODO: this is all going to get ripped out when I do proper string handling
-bool does_label_match(char* input, const char* label) {
-    if( strcmp(label, input) == 0 ) { return true; }
-    return false;
-}
-
-bool ini_line_split(char* input, char* out_a, char* out_b) {
-    int length = strlen(input) + 1; //used in for loop
-    int i;
-
-    //split on 0x3D "="
-    for(i = 0; i < length; i++) { if(input[i] == 0x3D) { break; } }
-    if( (i == 0) | (i == length) ) { return false; }
-
-    strncpy(out_a, input, i);
-    out_a[i] = 0x00; //NULL
-    strcpy(out_b, &input[i+1]);
-    return true;
-}
-
+//Parser for the dictionary spit out by the Ruby script
 void load_settings(State* state) {
-    FILE* file = fopen(SettingsINIPath, "r");
-
     //Initialize default settings
     state->Settings.horizontal_resolution = 682;
     state->Settings.vertical_resolution = 384;
     state->Settings.vsync = false;
     state->Settings.fullscreen = false;
 
-    if(file == NULL) {
-        message_log("Error loading file-", SettingsINIPath);
-        return;
-    }
+    //Load our ini data through Ruby
+    VALUE rb_hash = rb_funcall(Qnil, rb_intern("load_ini"), 1,
+        rb_str_new_cstr(SettingsINIPath));
 
-    const char* horizontal_resolution_label = "horizontal_resolution";
-    const char* vertical_resolution_label = "vertical_resolution";
-    const char* vsync_label = "vsync";
-    const char* fullscreen_label = "fullscreen";
-
-    char buffer[255]; char label[255]; char value[255];
-    while(fgets(buffer, 255, file)) {
-       if(buffer[0] == 0x23) { continue; } //skip line if "#"
-       if(ini_line_split(buffer, label, value)) {
-            if(does_label_match(label, horizontal_resolution_label)) {
-                state->Settings.horizontal_resolution = atoi(value);
-            } else if(does_label_match(label, vertical_resolution_label)) {
-                state->Settings.vertical_resolution = atoi(value);
-            } else if(does_label_match(label, vsync_label)) {
-                state->Settings.vsync = (bool)atoi(value);
-            } else if(does_label_match(label, fullscreen_label)) {
-                state->Settings.fullscreen = (bool)atoi(value);
-            }
-        }
-    }
-
-    return;
+        state->Settings.horizontal_resolution =
+            ruby_hash_get_int(rb_hash, "horizontal_resolution");
+        state->Settings.vertical_resolution =
+            ruby_hash_get_int(rb_hash, "vertical_resolution");
+        state->Settings.vsync =
+            (ruby_hash_get_int(rb_hash, "vsync") == 1);
+        state->Settings.fullscreen =
+            (ruby_hash_get_int(rb_hash, "fullscreen") == 1);
 }

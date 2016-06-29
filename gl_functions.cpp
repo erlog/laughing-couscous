@@ -177,6 +177,10 @@ inline glm::mat4 build_model_matrix(Object* object) {
 void gl_draw_font_glyph(Scene_Camera* camera, Font* font, UChar32 character,
     GLfloat size) {
 
+    //bail if we don't have the glyph
+    //TODO: do something better if the glyph doesn't exist?
+    if(font->glyphs.find(character) == font->glyphs.end()) { return; }
+
     Glyph glyph = font->glyphs[character];
     font->quad->model->scale = glyph.size * size;
 
@@ -197,8 +201,7 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, UChar32 character,
     font->quad->physics->position.x += (glyph.advance.x * size);
 }
 
-void gl_draw_text(Scene_Camera* camera, Font* font, UChar* text,
-    GLfloat size) {
+void gl_draw_text(Scene_Camera* camera, Font* font, UChar* text, GLfloat size) {
     glBindVertexArray(font->quad->vao);
     glUseProgram(font->quad->shader->id);
     glDisable(GL_DEPTH_TEST); glDisable(GL_CULL_FACE);
