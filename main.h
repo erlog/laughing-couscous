@@ -1,9 +1,3 @@
-//Compile-time Flags
-    //#define MAC_COMPILE 0
-    //#define LINUX_COMPILE 1
-    #define MEMORY_LOGGING 0
-    #define DEBUG 1
-
 //C Standard Library
     #include <stdlib.h>
     #include <time.h>
@@ -42,7 +36,7 @@
         Global_State->MemoryAllocated += real_size;
         #if MEMORY_LOGGING
         if(real_size > 0) {
-            printf("%lu B + Allocated (%s)\n", real_size, label);
+            printf("%lu B + (%s)\n", real_size, label);
         }
         #endif
         return pointer;

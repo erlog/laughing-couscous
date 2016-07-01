@@ -12,6 +12,5 @@ out vec2 texture_coordinate;
 void main() {
     gl_Position = model_view_projection * vec4(local_position, 1.0);
     texture_coordinate = vec2( char_info.x + (texture_coord.x * char_info.z),
-        //TODO: figure out what's up with the signs here and where to fix it
         1.0 - (char_info.y + (texture_coord.y * char_info.w)) );
 }

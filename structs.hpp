@@ -80,6 +80,7 @@ void wfree_shader(Shader* shader) {
 //Game Objects
 typedef struct c_physics_object {
     glm::vec3 old_position;
+    bool moved;
     glm::vec3 position; //where in world-space something is in meters
     GLfloat time_remaining;
     GLfloat velocity;   //how fast something is moving in meters/sec

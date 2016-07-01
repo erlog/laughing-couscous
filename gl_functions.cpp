@@ -52,28 +52,6 @@ inline void vector_set_if_higher(glm::vec3* input, glm::vec3* output) {
     if(input->z > output->z) { output->z = input->z; }
 }
 
-inline void cartesian_to_barycentric(glm::vec3* result, glm::vec3 cartesian,
-    glm::vec3 a, glm::vec3 b, glm::vec3 c) {
-
-    glm::vec3 vec_one;
-    vec_one.x = c.x - a.x; vec_one.y = b.x - a.x; vec_one.z = a.x - cartesian.x;
-
-    glm::vec3 vec_two;
-    vec_two.x = c.y - a.y; vec_two.y = b.y - a.y; vec_two.z = a.y - cartesian.y;
-
-    glm::vec3 vec_u = glm::cross(vec_one, vec_two);
-
-    GLfloat x = 1.0 - ((vec_u.x + vec_u.y) / vec_u.z);
-    GLfloat y = vec_u.y / vec_u.z;
-    GLfloat z = vec_u.x / vec_u.z;
-    GLfloat total = x + y + z;
-
-    result->x = x/total;
-    result->y = y/total;
-    result->z = z/total;
-    return;
-}
-
 //GL methods
 void gl_toggle_wireframe(bool on) {
     if(on) { glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); }
@@ -166,14 +144,6 @@ inline glm::mat4 build_model_matrix(Object* object) {
     return model_matrix;
 }
 
-#if 0
-        //Set texture options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#endif
-
 void gl_draw_font_glyph(Scene_Camera* camera, Font* font, UChar32 character,
     GLfloat size) {
 
@@ -204,6 +174,8 @@ void gl_draw_font_glyph(Scene_Camera* camera, Font* font, UChar32 character,
 void gl_draw_text(Scene_Camera* camera, Font* font, UChar* text, GLfloat size) {
     glBindVertexArray(font->quad->vao);
     glUseProgram(font->quad->shader->id);
+    //TODO: this bugs out when I enable depth-testing due to z-fighting
+    //on adjacent characters, I can probably fix it with blend mode?
     glDisable(GL_DEPTH_TEST); glDisable(GL_CULL_FACE);
     gl_bind_texture(font->quad->shader->id, font->page->id, 0, "diffuse");
 

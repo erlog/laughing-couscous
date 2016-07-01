@@ -19,9 +19,8 @@ inline void lerp(glm::vec3* result, glm::vec3 src, glm::vec3 dest, GLfloat amt) 
     return;
 }
 
-float debug_rand() {
-    int output = rand();
-    return (float)output/RAND_MAX;
+inline float debug_rand() {
+    return (float)rand()/RAND_MAX;
 }
 
 glm::vec4 rgb_to_vector(uint8_t r, uint8_t g, uint8_t b) {
@@ -115,7 +114,7 @@ void take_screenshot(State* state) {
     char* datetime_string = get_datetime_string();
     char* output_path = (char*)walloc(sizeof(char)*255);
 
-    sprintf(output_path, "%s/renderer - %s.png", OutputFolderPath,
+    snprintf(output_path, 255, "%s/renderer - %s.png", OutputFolderPath,
         datetime_string);
     message_log("Taking screenshot-", output_path);
 
@@ -136,6 +135,15 @@ void update_time(State* state) {
     state->DeltaTimeMS = state->GameTime - state->LastUpdateTime;
     state->DeltaTimeS = state->DeltaTimeMS / 1000.f;
     return;
+}
+
+void toggle_mouse_capture() {
+    if(SDL_GetRelativeMouseMode() == SDL_FALSE) {
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+    } else {
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        SDL_GetRelativeMouseState(NULL, NULL);
+    }
 }
 
 void toggle_pause(State* state) {

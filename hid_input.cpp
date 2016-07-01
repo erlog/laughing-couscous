@@ -1,4 +1,3 @@
-
 void process_input(State* state) {
     Game_Input* input = state->Input;
     //TODO: make velocity part of the Player or abstract it some other way
@@ -31,13 +30,16 @@ void process_input(State* state) {
             glm::vec3(0.f, glm::radians(input->relative_camera_x*0.25f), 0.f));
         glm::quat rotation_y = glm::quat(
             glm::vec3(glm::radians(input->relative_camera_y*0.25f), 0.f, 0.f));
-        //this kills rolling on Z
-        physics->quaternion = rotation_y * physics->quaternion * rotation_x;
+
+        //this order kills rolling on Z
+        glm::quat new_quaternion =
+            rotation_y * physics->quaternion * rotation_x;
+
+        //TODO: prevent camera from crossing the axis into mirror land
+        physics->quaternion = new_quaternion;
     }
     return;
 }
-
-
 
 
 void poll_input(State* state, const uint8_t* keystate) {
@@ -77,9 +79,6 @@ void poll_input(State* state, const uint8_t* keystate) {
     return;
 }
 
-#if 0
-#endif
-
 void handle_keyboard(State* state, SDL_Event event) {
     SDL_KeyboardEvent key = event.key;
 
@@ -88,6 +87,7 @@ void handle_keyboard(State* state, SDL_Event event) {
             state->IsRunning = false;
             break;
         case SDLK_SPACE:
+            toggle_mouse_capture();
             message_log("Player Position", state->Player->physics->position);
             break;
         case SDLK_TAB:

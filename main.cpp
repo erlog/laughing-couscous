@@ -1,3 +1,9 @@
+//Compile-time Flags
+    //#define MAC_COMPILE 0
+    //#define LINUX_COMPILE 1
+    #define MEMORY_LOGGING 0
+    #define DEBUG 1
+
 #include "main.h"
 
 int main() {
@@ -81,7 +87,7 @@ int main() {
     glPixelStorei(GL_PACK_ALIGNMENT, 1); glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glMatrixMode( GL_PROJECTION ); glLoadIdentity();
     glMatrixMode( GL_MODELVIEW ); glLoadIdentity();
-    glClearColor( 0.f, 0.f, 0.f, 1.f );
+    glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND); glEnable(GL_DEPTH_TEST); glEnable(GL_CULL_FACE);
     //glFrontFace(GL_CCW); //Default is CCW, counter-clockwise
@@ -95,8 +101,8 @@ int main() {
     state->Camera = (Scene_Camera*)walloc(sizeof(Scene_Camera));
     state->Camera->physics = (Physics_Object*)walloc(sizeof(Physics_Object));
     load_physics(state->Camera->physics);
-    state->Camera->projection = glm::perspective(glm::radians(45.f),
-        (float)state->Screen->width/state->Screen->height, 0.1f, 100.f);
+    state->Camera->projection = glm::perspective(glm::radians(45.0f),
+        (float)state->Screen->width/state->Screen->height, 0.1f, 100.0f);
 
     //Construct screen-space camera for HUD elements
     Scene_Camera screen_camera;
@@ -120,9 +126,9 @@ int main() {
     load_object(state->Player, "wedge", "cheese", "blank_nm_512",
         "cheese_spec", "shader");
     state->Player->model->color = rgb_to_vector(0xE7, 0xE0, 0x8B);
-    state->Player->physics->position = glm::vec3(0.f, 3.f, 0.f);
+    state->Player->physics->position = glm::vec3(0.0f, -1.0f, 0.0f);
 
-    glm::vec3 light_direction = glm::vec3(0.f, -1.f, -1.f);
+    glm::vec3 light_direction = glm::vec3(0.0f, -1.0f, -1.0f);
     normalize(&light_direction);
 
     //TODO: break this out into level loading code
@@ -131,23 +137,23 @@ int main() {
 
     load_object(&state->Objects[0], "cube", "blank", "blank_nm",
         "blank_spec", "flat");
-    state->Objects[0].physics->position = glm::vec3(-10.5f, 0.f, 0.f);
-    state->Objects[0].physics->rotation_vector = glm::vec3(1.f, 1.f, 0.f);
+    state->Objects[0].physics->position = glm::vec3(-10.5f, 0.0f, 0.0f);
+    state->Objects[0].physics->rotation_vector = glm::vec3(1.0f, 1.0f, 0.0f);
     state->Objects[0].light_direction = light_direction;
     state->Objects[0].model->color = rgb_to_vector(0xE3, 0x1F, 0x1F);
 
     load_object(&state->Objects[1], "african_head", "african_head", "african_head",
         "african_head", "flat_shaded");
-    state->Objects[1].physics->position = glm::vec3(10.5f, 0.0f, 0.f);
-    state->Objects[1].physics->rotation_vector = glm::vec3(0.f, 1.f, 0.f);
+    state->Objects[1].physics->position = glm::vec3(10.5f, 0.0f, 0.0f);
+    state->Objects[1].physics->rotation_vector = glm::vec3(0.0f, 1.0f, 0.0f);
     state->Objects[1].light_direction = light_direction;
     state->Objects[1].model->color = rgb_to_vector(0xE3, 0x78, 0x1F);
     state->Objects[1].model->scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
     load_object(&state->Objects[2], "cone", "blank", "blank_nm",
         "blank_spec", "flat_shaded");
-    state->Objects[2].physics->position = glm::vec3(-15.5f, 0.f, 0.f);
-    state->Objects[2].physics->rotation_vector = glm::vec3(0.f, 0.f, 1.f);
+    state->Objects[2].physics->position = glm::vec3(-15.5f, 0.0f, 0.0f);
+    state->Objects[2].physics->rotation_vector = glm::vec3(0.0f, 0.0f, 1.0f);
     state->Objects[2].light_direction = light_direction;
     state->Objects[2].model->color = rgb_to_vector(0x19, 0xB5, 0x19);
 
@@ -160,7 +166,7 @@ int main() {
     load_font(&test_font, "DroidSans");
 
     //MAIN LOOP- Failures here may cause a proper smooth exit when necessary
-    message_log("Starting update loop.", "");
+    message_log("Starting update loop.");
 
     //TODO: figure out how to start my clock without eating the first frame
     state->TimeDifference = 0;
@@ -200,19 +206,17 @@ int main() {
         if( state->DeltaTimeMS > 30 ) {
             process_input(state);
 
-            //rb_funcall(rb_cObject, rb_update_func, 0, NULL);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
             //TODO: unified camera system
             //first person camera
 
             #if 0
             state->Camera->direction = glm::normalize(
-                glm::vec3(0.f, 0.f, -1.f) * state->Camera->physics->quaternion);
+                glm::vec3(0.0f, 0.0f, -1.0f) * state->Camera->physics->quaternion);
             state->Camera->view  = glm::lookAt(state->Camera->physics->position,
                 state->Camera->direction + state->Camera->physics->position,
-                glm::vec3(0.f, 1.f, 0.f));
+                glm::vec3(0.0f, 1.0f, 0.0f));
             state->Camera->physics->quaternion =
                 glm::quat_cast(state->Camera->view);
             #endif
@@ -223,18 +227,18 @@ int main() {
                 (glm::vec3(0.0f, 6.0f, 6.0f) * state->Camera->physics->quaternion);
             state->Camera->view = glm::lookAt(state->Camera->physics->position,
                  state->Player->physics->position,
-                glm::vec3(0.f, 1.f, 0.f));
+                glm::vec3(0.0f, 1.0f, 0.0f));
             #endif
 
             //draw dynamic objects
             for(int i = 0; i < state->ObjectCount; i++) {
-                //state->Objects[i].physics->angular_velocity = 30.f;
+                //state->Objects[i].physics->angular_velocity = 30.0f;
                 //update_physics_object(state->Objects[i].physics, state->DeltaTimeS);
                 gl_draw_object(state->Camera, &state->Objects[i]);
             }
 
             //draw level
-            //gl_draw_object(state->Camera, state->Level->geometry);
+            gl_draw_object(state->Camera, state->Level->geometry);
             //octree_debug_draw(state->Level->octree, state);
 
 
@@ -250,20 +254,23 @@ int main() {
             }
             //face model in direction of movement
             physics_face_movement_direction(state->Player);
-            //gl_draw_object(state->Camera, state->Player);
+            gl_draw_object(state->Camera, state->Player);
 
-            //draw bounding sphere
-            state->Debug_Cube->physics->position = state->Player->physics->position;
-            state->Debug_Cube->model->scale = state->Player->physics->radii * 2.0f;
-            state->Debug_Cube->model->rotation = state->Player->model->rotation;
+            //draw bounding box
+            #if 1
+            state->Debug_Sphere->physics->position = state->Player->physics->position;
+            state->Debug_Sphere->model->scale = state->Player->physics->radii;
+            //state->Debug_Sphere->model->rotation = state->Player->model->rotation;
+
             gl_toggle_wireframe(true);
-            //gl_draw_object(state->Camera, state->Debug_Cube);
+            gl_draw_object(state->Camera, state->Debug_Sphere);
             gl_toggle_wireframe(false);
+            #endif
 
 
             //draw test text
             //TODO: make this an FPS counter
-            test_font.quad->physics->position = glm::vec3(0.0f, 16.0f, 0.0f);
+            test_font.quad->physics->position = glm::vec3(0.0f, 8.0f, 0.0f);
             gl_draw_text(&screen_camera, &test_font, test_text, 32.0f);
 
             SDL_GL_SwapWindow(window);
@@ -296,6 +303,7 @@ int main() {
 
     take_screenshot(state);
     wfree_font(&test_font);
+    wfree_camera(&screen_camera);
     wfree(test_text);
     wfree_state(state);
     wfree(state);

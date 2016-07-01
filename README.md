@@ -1,4 +1,54 @@
-Library and Licensing Information
+//SYSTEMS:
+
+I/O-
+    SDL2(https://www.libsdl.org/) is used for getting graphics/sounds/input contexts.
+    OpenGL(https://www.opengl.org) is used for 3D rendering.
+
+Scripting-
+    Embedded stateless Ruby interpreter.
+
+Textures-
+    Stored as 32-bit PNG files with an alpha channel.
+    Loaded with the LodePNG(http://lodev.org/lodepng/) library.
+
+Strings-
+    Stored on disk as UTF-8 text files.
+    Interpreted through Ruby.
+    Passed to ICU(http://icu-project.org) and converted to UTF-16 internally.
+    Dev environment locale is UTF-8 so string literals also go through ICU.
+
+Fonts-
+    Stored on disk as AngelCode BMFont(http://www.angelcode.com/products/bmfont).
+    Interpreted through Ruby.
+    Rendered as signed distance fields using Hiero(https://github.com/libgdx/libgdx/wiki/Hiero).
+    Glyph information stored internally as map between ICU UChar32 and a glyph struct.
+
+Models-
+    Stored on disk as quad-based Wavefront OBJ files exported from Blender.
+    Loaded and parsed with ASSIMP(http://www.assimp.org/).
+    Originals stored as Blender files in seperate folder.
+
+//TODO:
+add real lighting
+    status: read all of Carmack's .plan files
+come up with a level format
+    status: began implementing octree-based geometry indexing, slow going
+decide on a proper string format
+    status: added ICU to the project, but haven't really moved over to it yet
+generalize key input for later rebinding
+    status: not started
+alt-tab support
+    status: investigated and found nothing, ALT-TAB keystrokes are being
+            eaten while I have mouse focus
+collision
+    status: rudimentary and bad collision is in, but it's buggy and doesn't use
+            octrees
+    gravity: ray cast down to see if the player is supported, move the player
+             to that level of support
+
+
+
+//LIBRARY AND LICENSING INFORMATION:
 
 SDL2.0 used under the zlib license.
     https://www.libsdl.org/license.php
