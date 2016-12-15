@@ -1,4 +1,11 @@
 //Small functions that don't fit anywhere else with minimal dependencies
+inline GLfloat min(GLfloat a, GLfloat b) {
+    if( a > b ) { return b; } return a;
+}
+inline GLfloat max(GLfloat a, GLfloat b) {
+    if( a > b ) { return a; } return b;
+}
+
 inline void clamp(GLfloat* number, GLfloat min, GLfloat max) {
     if(*number > max) { *number = max; return; }
     if(*number < min) { *number = min; return; }

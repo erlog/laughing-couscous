@@ -31,8 +31,8 @@ void physics_process_movement(Physics_Object* physics) {
     glm::vec3 direction_vector;
     physics->old_position = physics->position;
     physics->moved = false;
-    //DEBUG_LOG(physics->time_remaining);
-    if( (physics->velocity > 0) ) { // & (physics->fall_speed < 1.0f) ) {
+
+    if( (physics->velocity > 0) ) {
         physics->moved = true;
         direction_vector = physics->movement_vector * physics->quaternion;
         direction_vector.y = 0;
@@ -92,8 +92,6 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
         face = &level->collision_model->faces[i];
 
         //STEP 1: Take 2 points. Test which side of the plane they're on.
-        //NOTE: this fails if we're moving greater than size of the diameter
-        //per frame
         point_a = physics->position - (face->normal * physics->radii);
         point_b = physics->position + (face->normal * physics->radii);
 
@@ -119,7 +117,9 @@ bool process_collision(Game_Level* level, Physics_Object* physics) {
             }
 
             //STEP 4: Now that we know we've collided we need to react.
-            GLfloat rebound_distance = glm::distance(intersection_point, point_b);
+            GLfloat rebound_distance_a = glm::distance(intersection_point, point_a);
+            GLfloat rebound_distance_b = glm::distance(intersection_point, point_b);
+            GLfloat rebound_distance = min(rebound_distance_a, rebound_distance_b);
             rebound_distance += 0.001f; //to make sure we're clear of the obstruction
             physics->position += (face->normal * rebound_distance);
 

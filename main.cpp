@@ -247,9 +247,11 @@ int main() {
             state->Player->physics->time_remaining = state->DeltaTimeS;
             physics_process_movement(state->Player->physics);
             //TODO: make our collision detection not require this sanity check
-            for(int reps = 0; reps < 25; reps ++) {
-                if(!process_collision(state->Level, state->Player->physics)) {
-                    break;
+            if(state->Player->physics->moved) {
+                for(int reps = 0; reps < 25; reps ++) {
+                    if(!process_collision(state->Level, state->Player->physics)) {
+                        break;
+                    }
                 }
             }
             //face model in direction of movement
